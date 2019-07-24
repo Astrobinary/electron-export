@@ -1,31 +1,62 @@
 {
-  "name": "electron-export",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
-    "react-scripts": "3.0.1"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+	"name": "electron-export",
+	"version": "0.1.0",
+	"private": true,
+	"author": {
+		"name": "Brandon Padilla",
+		"email": "brandon.padilla@broadridge.com",
+		"url": "https://github.com/Astrobinary"
+	},
+	"build": {
+		"appId": "com.broadridge.electron-export",
+		"productName": "Electron Export",
+		"copyright": "Copyright © 2019 ${author}",
+		"files": [
+			"build/**/*",
+			"node_modules/**/*"
+		],
+		"directories": {
+			"buildResources": "assets"
+		}
+	},
+	"dependencies": {
+		"electron-is-dev": "^1.1.0",
+		"node-sass": "^4.12.0",
+		"react": "^16.8.6",
+		"react-dom": "^16.8.6",
+		"react-scripts": "3.0.1"
+	},
+	"homepage": "./",
+	"main": "public/electron.js",
+	"scripts": {
+		"dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
+		"start": "rescripts start",
+		"build": "rescripts build",
+		"postinstall": "electron-builder install-app-deps",
+		"preelectron-pack": "yarn build",
+		"electron-pack": "electron-builder -w"
+	},
+	"eslintConfig": {
+		"extends": "react-app"
+	},
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version"
+		]
+	},
+	"devDependencies": {
+		"@rescripts/cli": "^0.0.11",
+		"@rescripts/rescript-env": "^0.0.10",
+		"concurrently": "^4.1.1",
+		"cross-env": "^5.2.0",
+		"electron": "^5.0.8",
+		"electron-builder": "^21.1.1",
+		"typescript": "^3.5.3",
+		"wait-on": "^3.3.0"
+	}
 }
