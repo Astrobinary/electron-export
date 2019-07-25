@@ -1,0 +1,30 @@
+.Titlebar {
+	display: flex;
+	background-color: black;
+	width: 100%;
+	height: 30px;
+	color: white;
+	flex-direction: row;
+	justify-content: space-between;
+	line-height: 30px;
+	z-index: 100;
+	user-select: none;
+}
+
+.titlebar-text {
+	padding-left: 10px;
+	width: 100%;
+	-webkit-app-region: drag;
+}
+
+.titlebar-close {
+	color: white;
+	padding: 0 10px;
+	font-weight: bold;
+	transition: all 0.2s ease;
+	&:hover {
+		color: black;
+		background-color: whitesmoke;
+		cursor: pointer;
+	}
+}

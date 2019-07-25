@@ -1,16 +1,32 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+
 import ReactDOM from "react-dom";
-import logo from "./logo.svg";
 import "./global.scss";
 
-const App = () => {
+import jsonConvert from "./utils/jsonConverter";
+import Titlebar from "./components/Titlebar/titlebar";
+
+const { ipcRenderer } = require("electron");
+
+const Renderer = () => {
+	const [json, setJson] = useState(null);
+
+	const renderHandlebars = () => {
+		ipcRenderer.send("compose-handlebars", json);
+	};
+
+	useEffect(() => {
+		ipcRenderer.send("compose-handlebars", json);
+	});
+
 	return (
-		<div className="App">
-			<header className="App-header">
-				<img src={logo} className="App-logo" alt="logo" />
-			</header>
-		</div>
+		<React.Fragment>
+			<Titlebar />
+			<button onClick={() => setJson(jsonConvert())}>Create Json test file</button>
+			<button onClick={() => renderHandlebars()}>Handlebars template</button>
+			<button onClick={() => console.log(json)}>Log state</button>
+		</React.Fragment>
 	);
 };
 
-ReactDOM.render(<App />, document.getElementById("root"));
+ReactDOM.render(<Renderer />, document.getElementById("root"));
