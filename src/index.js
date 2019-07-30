@@ -12,11 +12,12 @@ const Renderer = () => {
 	const [json, setJson] = useState(null);
 
 	const renderHandlebars = () => {
+		console.log("composing template...");
 		ipcRenderer.send("compose-handlebars", json);
 	};
 
 	useEffect(() => {
-		ipcRenderer.send("compose-handlebars", json);
+		renderHandlebars();
 	});
 
 	return (
@@ -24,7 +25,6 @@ const Renderer = () => {
 			<Titlebar />
 			<button onClick={() => setJson(jsonConvert())}>Create Json test file</button>
 			<button onClick={() => renderHandlebars()}>Handlebars template</button>
-			<button onClick={() => console.log(json)}>Log state</button>
 		</React.Fragment>
 	);
 };

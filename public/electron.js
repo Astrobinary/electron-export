@@ -4,8 +4,12 @@ const path = require("path");
 const isDev = require("electron-is-dev");
 const Handlebars = require("handlebars");
 const pretty = require("pretty");
-const data = JSON.parse(fs.readFileSync("./src/utils/samples/json/sample_bl.json", "utf8"));
 require("../src/helpers");
+
+const samplePath = "C:\\Users\\padillab\\Documents\\Development\\electron-export\\samples\\";
+
+//Temp dev enviroments
+const data = JSON.parse(fs.readFileSync(`${samplePath}bancorp\\json_bancorp.json`, "utf8"));
 
 let mainWindow;
 
@@ -18,6 +22,7 @@ const createWindow = () => {
 			nodeIntegration: true
 		}
 	});
+
 	mainWindow.loadURL(isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "../build/index.html")}`);
 
 	if (isDev) {
@@ -42,6 +47,7 @@ app.on("activate", () => {
 });
 
 ipcMain.on("compose-handlebars", (_event, json) => {
+	//Temp dev enviroments
 	const source = fs.readFileSync("./src/template.handlebars", "utf8").toString();
 	const template = Handlebars.compile(source);
 	const output = template(data);
@@ -55,6 +61,8 @@ ipcMain.on("compose-handlebars", (_event, json) => {
 			})
 		);
 	});
-	console.log(`\n\n\n\n\n\n\n\n\nOutput below: ${new Date().getTime()}`);
-	console.log(output);
+
+	stream.on("end", () => {
+		mainWindow.minimize();
+	});
 });

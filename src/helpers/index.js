@@ -1,2 +1,2 @@
 //Gathers all custom helpers for handlebars
-exports.boogie = require("./boogie");
+exports.gather_blocks = require("./gather_blocks");

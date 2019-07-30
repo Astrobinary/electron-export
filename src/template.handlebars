@@ -1,8 +1,13 @@
 {{#each document.pages.page}}
 <div class="page" style="width: {{this.att.psx}}pt; margin: auto; position: relative;">
-    {{#each this.stream}}
-       {{boogie "ewwdddddww"}}
-    {{/each}}
-    <hr style="page-break-after: always; width: {{this.att.psx}}pt; margin-top: 30px; margin-bottom: 30px; border: 0px; height: 3px; background-color: black" />
+
+    {{#gather_blocks this.stream}}
+        
+    {{/gather_blocks}}
+
+    <div id="PageBreak" style="page-break-after: always;">
+        <hr style="border-width: 0pt; clear: both; margin: 25pt 0pt; width: {{this.att.psx}}pt; height: 2pt; color: #000000; background-color: #000000;">
+    </div>
+
 </div>
 {{/each}}

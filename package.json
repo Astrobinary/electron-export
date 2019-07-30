@@ -34,7 +34,7 @@
 	"homepage": "./",
 	"main": "public/electron.js",
 	"scripts": {
-		"dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://localhost:3000 && electron .\"",
+		"dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://localhost:3000 && nodemon --watch ./src/helpers/* --watch ./src/template.handlebars --exec electron . \"",
 		"start": "rescripts start",
 		"build": "rescripts build",
 		"postinstall": "electron-builder install-app-deps",
@@ -61,6 +61,7 @@
 		"cross-env": "^5.2.0",
 		"electron": "^5.0.8",
 		"electron-builder": "^21.1.1",
+		"nodemon": "^1.19.1",
 		"typescript": "^3.5.3",
 		"wait-on": "^3.3.0"
 	}
