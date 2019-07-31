@@ -9,7 +9,7 @@ require("../src/helpers");
 const samplePath = "C:\\Users\\padillab\\Documents\\Development\\electron-export\\samples\\";
 
 //Temp dev enviroments
-const data = JSON.parse(fs.readFileSync(`${samplePath}bancorp\\json_bancorp.json`, "utf8"));
+const data = JSON.parse(fs.readFileSync(`${samplePath}training\\json_test.json`, "utf8"));
 
 let mainWindow;
 
@@ -66,3 +66,5 @@ ipcMain.on("compose-handlebars", (_event, json) => {
 		mainWindow.minimize();
 	});
 });
+
+/////General helpers\\\\\

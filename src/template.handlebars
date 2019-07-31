@@ -1,13 +1,30 @@
-{{#each document.pages.page}}
-<div class="page" style="width: {{this.att.psx}}pt; margin: auto; position: relative;">
-
-    {{#gather_blocks this.stream}}
+{{#each this.el}} {{!-- Document Root, filter only elements --}}
+    {{#each this.el}} {{!-- Each element in document (Pages/Styles) --}}
+       {{#filter_scope this "pages"}} {{!-- Pages element only --}}
         
-    {{/gather_blocks}}
+            {{#each this.el}}
+                <div class="page" style="width: {{this.att.psx}}pt; text-align: center; margin: auto; position: relative;">
+                    {{#gather_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
+                        {{#each this}} {{!-- Each block --}}
 
-    <div id="PageBreak" style="page-break-after: always;">
-        <hr style="border-width: 0pt; clear: both; margin: 25pt 0pt; width: {{this.att.psx}}pt; height: 2pt; color: #000000; background-color: #000000;">
-    </div>
+                            {{#create_blocks this}} {{!-- Generates block elements --}}
 
-</div>
-{{/each}}
+                                {{#each this.el}} {{!-- Each group --}}
+                                    
+                                    {{#create_tags ../this this @index}}
+                                        {{display_text ../this}}
+                                    {{/create_tags}}
+
+                                {{/each}}
+
+                            {{/create_blocks}}
+
+                        {{/each}}
+                    {{/gather_blocks}}
+                <hr style="page-break-after: always; width: {{this.att.psx}}pt; margin-top: 30px; margin-bottom: 30px; border: 0px; height: 3px; background-color: black" />
+                </div>
+            {{/each}}
+
+        {{/filter_scope}}{{!-- Pages element only --}}
+    {{/each}}{{!-- Each element in document (Pages/Styles) --}}
+{{/each}}{{!-- Document Root, filter only elements --}}

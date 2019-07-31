@@ -1,41 +1,39 @@
 const fs = require("fs");
 const convert = require("xml-js");
 
-const file = "json_bancorp";
+const file = "json_test";
 const path = "C:\\Users\\padillab\\Documents\\Development\\electron-export\\samples\\"; //For dev purposes only
 
-const rawXML = fs.readFileSync(`${path}bancorp\\xml_bancorp.xml`, "utf8");
+const rawXML = fs.readFileSync(`${path}training\\xml_test.xml`, "utf8");
 const removeFrame = /<block type="frame"([\s\S]*?)<\/block>/gm;
 const xml = rawXML.replace(removeFrame, ""); //Removes XPP banner from XML
-
-const removeEmptyElement = /{},\s\n*/gm;
-const removeEmptyLastElement = /,\n\s*?{}/gm;
 
 const generateJSON = () => {
 	const options = {
 		ignoreDoctype: true,
 		ignoreDeclaration: true,
 		ignoreComment: true,
-		compact: true,
+		alwaysArray: true,
 		spaces: 2,
-		textKey: "txt",
-		attributesKey: "att",
 		elementsKey: "el",
+		attributesKey: "att",
+		textKey: "txt",
 		instructionKey: "ins",
+
 		attributesFn: val => {
-			return val["trace"] !== "delete" ? val : null; //Removes deleted traces attributes
+			if (val["trace"] === "delete") return undefined; //Removes deleted traces attributes
+
+			return val;
 		}
 	};
 
 	const results = convert.xml2json(xml, options);
-	let cleanResults = results.replace(removeEmptyElement, "");
-	cleanResults = cleanResults.replace(removeEmptyLastElement, "");
 
-	fs.writeFile(`${path}bancorp\\${file}.json`, cleanResults, "utf8", err => {
+	fs.writeFile(`${path}training\\${file}.json`, results, "utf8", err => {
 		err ? console.log("Error creating file.") : console.log(`JSON file created (${file}.json)`);
 	});
 
-	return cleanResults;
+	return results;
 };
 
 export default generateJSON;
