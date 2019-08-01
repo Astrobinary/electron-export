@@ -8,10 +8,9 @@ exports.display_text = require("./display_text");
 
 //Outputs current context
 Handlebars.registerHelper("debug", context => {
-	console.log("Current Context");
-	console.log("====================");
+	console.log("========START========");
 	console.log(context);
-	console.log("--------------------");
+	console.log("---------END---------");
 });
 
 //Filters json data based on name
@@ -24,8 +23,10 @@ Handlebars.registerHelper("filter_scope", (context, name, options) => {
 });
 
 //Soft filter for xpp instructions
-exports.onlyElements = arr => {
+exports.onlyType = (arr, type) => {
+	if (arr === undefined) return [];
+
 	return arr.filter(item => {
-		return item.type === "element";
+		return item.type === type;
 	});
 };
