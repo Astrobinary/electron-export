@@ -1,5 +1,3 @@
-const help = require("./index");
-
 //General CSS for tags generated from XML
 module.exports.generatedCSS = (rootStyle, currentName) => {
 	let att;
@@ -11,18 +9,22 @@ module.exports.generatedCSS = (rootStyle, currentName) => {
 		}
 	});
 
-	//Handles font variant/font weight
-	let fontWeight = "";
+	if (att === undefined) return;
 
-	if (att.fv === "1") {
-		fontWeight = "font-weight: bold; font-style: normal;";
-	} else if (att.fv === "2") {
-		fontWeight = "font-weight: normal; font-style: italic;";
-	} else if (att.fv === "3") {
-		fontWeight = "font-weight: bold; font-style: italic;";
-	} else {
-		fontWeight = "font-weight: normal; font-style: normal;";
-	}
+	// //Handles font variant/font weight
+	// let fontWeight = "";
+
+	// if (att.hasOwnProperty("fv")) {
+	// 	if (att.fv === "1") {
+	// 		fontWeight = "font-weight: bold; font-style: normal;";
+	// 	} else if (att.fv === "2") {
+	// 		fontWeight = "font-weight: normal; font-style: italic;";
+	// 	} else if (att.fv === "3") {
+	// 		fontWeight = "font-weight: bold; font-style: italic;";
+	// 	} else {
+	// 		fontWeight = "font-weight: normal; font-style: normal;";
+	// 	}
+	// }
 
 	//Handles font family
 	let fontFamily = "";
@@ -35,12 +37,13 @@ module.exports.generatedCSS = (rootStyle, currentName) => {
 		fontFamily = "Helvetica, Arial, Sans-Serif";
 	}
 
-	return `font-size: ${att.size}pt; color: ${att.color}; font-family: ${fontFamily}; ${fontWeight}`;
+	return `font-size: ${att.size}pt; color: ${att.color}; font-family: ${fontFamily};`;
 };
 
 //Created style based on element attributes
 module.exports.inlineCSS = (block, group, gindex) => {
 	let att;
+	let style = "";
 
 	if (group.el[0].att.bmline) {
 		att = group.el[1].att;
@@ -48,13 +51,22 @@ module.exports.inlineCSS = (block, group, gindex) => {
 		att = group.el[0].att;
 	}
 
-	let style = "";
-
-	console.log(group.el);
+	//Indents and levels
+	if (group.el[0].att.lindent > 0) {
+		if (group.el[1] !== undefined) {
+			if (group.el[0].att.lindent > group.el[1].att.lindent) {
+				style += `text-indent: ${att.lindent - group.el[1].att.lindent}pt;`;
+				if (group.el[1].att.lindent > 0) style += `padding-left: ${group.el[1].att.lindent}pt;`;
+			} else {
+				style += `padding-left: ${att.lindent}pt;`;
+			}
+		} else {
+			style += `text-indent: ${att.lindent}pt;`;
+		}
+	}
 
 	style += `text-align: ${att.qdtype}; `;
-
-	style += `margin: ${parseInt(att.prelead) + parseInt(att.ldextra)}pt 0pt 0pt 0pt;`;
+	style += `margin-top: ${parseInt(att.prelead) + parseInt(att.ldextra)}pt;`;
 
 	return style.trim();
 };

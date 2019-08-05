@@ -30,3 +30,16 @@ exports.onlyType = (arr, type) => {
 		return item.type === type;
 	});
 };
+
+//Checks t if contains hang
+exports.hasHang = lines => {
+	if (lines[0].att.last === "true") return;
+
+	if (lines.length > 1) {
+		if (lines[0].att.yfinal === lines[1].att.yfinal) {
+			return true;
+		}
+	}
+
+	return;
+};

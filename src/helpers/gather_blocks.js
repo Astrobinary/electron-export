@@ -1,5 +1,4 @@
 const Handlebars = require("handlebars");
-///48
 exports = Handlebars.registerHelper("gather_blocks", (streams, options) => {
 	let pageBlocks = [];
 	let footnotes = [];

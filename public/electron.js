@@ -66,5 +66,3 @@ ipcMain.on("compose-handlebars", (_event, json) => {
 		mainWindow.minimize();
 	});
 });
-
-/////General helpers\\\\\

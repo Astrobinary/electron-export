@@ -7,11 +7,11 @@
                     {{#gather_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
                         {{#each this}} {{!-- Each block --}}
 
-                            {{#create_blocks this}} {{!-- Generates block elements --}}
+                            {{#create_blocks ../this this}} {{!-- Generates block elements --}}
 
                                 {{#each this.el}} {{!-- Each group --}}
                                     
-                                    {{#create_tags @root.el.0.el.1.el ../this this @index}}
+                                    {{~#create_tags @root.el.0.el.1.el ../this this @index ~}}
                                         {{~ display_text @root.el.0.el.1.el ../../this ../this ~}}
                                     {{/create_tags}}
 
@@ -21,7 +21,7 @@
 
                         {{/each}}
                     {{/gather_blocks}}
-                <hr style="page-break-after: always; width: {{this.el.[0].el.[0].att.bsx}}pt; margin-top: 30px; margin-bottom: 30px; border: 0px; height: 3px; background-color: black" />
+                <hr style="page-break-after: always; width: {{this.el.[0].el.[0].att.bsx}}pt; margin-top: 20pt; margin-bottom: 20pt; border: 0px; height: 3px; background-color: black" />
                 </div>
             {{/each}}
 
