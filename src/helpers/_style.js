@@ -43,13 +43,17 @@ module.exports.inlineCSS = (block, group, gindex) => {
 		if (group.el[1] !== undefined) {
 			if (group.el[0].att.lindent > group.el[1].att.lindent) {
 				style += `text-indent: ${att.lindent - group.el[1].att.lindent}pt;`;
-				if (group.el[1].att.lindent > 0) style += `padding-left: ${group.el[1].att.lindent}pt;`;
+				if (group.el[1].att.lindent > 0) style += `margin-left: ${group.el[1].att.lindent}pt;`;
 			} else {
-				style += `padding-left: ${att.lindent}pt;`;
+				style += `margin-left: ${att.lindent}pt;`;
 			}
 		} else {
 			style += `text-indent: ${att.lindent}pt;`;
 		}
+	}
+
+	if (group.el[0].att.rindent > 0) {
+		style += `margin-right: ${att.rindent}pt;`;
 	}
 
 	style += `text-align: ${att.qdtype}; `;
@@ -69,6 +73,10 @@ module.exports.inlineCSS = (block, group, gindex) => {
 		}
 	}
 
+	if (group.el[0].el[0].ins === "textbox") {
+		style += `border: 1px solid; padding: ${group.el[1].att.prelead}pt; margin-top: ${group.el[1].att.prelead}pt;`;
+	}
+
 	if (group.att.class === "sum1") {
 		if (group.el.length > 1)
 			if (group.el[1].att.lindent !== 0) {
@@ -84,6 +92,8 @@ module.exports.inlineCSS = (block, group, gindex) => {
 module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIndex, lineIndex) => {
 	//Dont style empty text...
 	if (!/\S/.test(text)) return text;
+	text = text.replace(/</gm, "&lt;");
+	text = text.replace(/>/gm, "&gt;");
 
 	let att, groupATT;
 
@@ -108,6 +118,8 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 	if (att.color !== "#000000") {
 		styles += `color: ${att.color};`;
 	}
+	//Adds bg color to text
+	if (att.hasOwnProperty("background-color")) styles += `background-color: ${att["background-color"]};`;
 
 	//Checks for different size
 	if (att.size !== groupATT.size) {
@@ -121,7 +133,22 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 		}
 	}
 
-	if (text === "󰄝") text = "&#8226;"; //Bullet to html??
+	//Handles X value
+	if (t.att.x > 0) styles += `padding-left: ${t.att.x - 3}pt;`;
+
+	// Handles Y value
+	if (t.att.y > 0) styles += `transform: translateY(${t.att.y}pt); display: inline-block;`;
+
+	//Handles CM casing
+	if (att.cm === "upper") {
+		styles += `text-transform: uppercase;`;
+	} else if (att.cm === "lower") {
+		styles += `text-transform: lowercase;`;
+	} else if (att.cm === "smallcap") {
+		styles += `font-variant: small-caps;`;
+	}
+
+	if (text === "󰄝") text = `<font style=" font-size: 16pt; line-height: 12pt;">&#8226;</font>`; //Bullet to html??
 	if (t.att.y < 0) text = `<sup style="line-height: 1; font-size: x-small;">${text}</sup>`;
 	if (t.att.ul1) text = `<u>${text}</u>`;
 
@@ -145,6 +172,10 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 			text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
 		}
 	}
+
+	if (t.att.hasOwnProperty("ul8")) text = `<font style="text-decoration: line-through">${text}</font>`;
+	if (t.att.hasOwnProperty("ul10")) text = `<font style="border-bottom: 3px double;">${text}</font>`;
+	if (t.att.hasOwnProperty("ul8") && t.att.hasOwnProperty("ul10")) text = `<font  style="text-decoration: line-through border-bottom: 3px double;">${text}</font>`;
 
 	return text;
 };

@@ -11,7 +11,10 @@
 # production
 /build
 /dist
+
+# development
 /samples
+/output
 
 # misc
 .DS_Store

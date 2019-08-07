@@ -74,7 +74,7 @@ const parseText = (rootStyle, group, groupStyle, line, lineIndex, t, tIndex) => 
 	if (groupStyle === "sum1") if (t.att.cgt) return "";
 
 	t.el.forEach((el, elIndex) => {
-		if (el)
+		if (el) {
 			if (el.type === "instruction") {
 				const ins = handleInstructions(el);
 				if (ins !== null) text += ins;
@@ -91,6 +91,7 @@ const parseText = (rootStyle, group, groupStyle, line, lineIndex, t, tIndex) => 
 				//Wrap text with basic styling
 				text += style.wrapText(el.txt, t.att.style, rootStyle, group, line, groupStyle, t, tIndex, lineIndex);
 			}
+		}
 	});
 
 	return text;
@@ -107,7 +108,7 @@ const handleInstructions = el => {
 };
 
 const handleRules = (line, t) => {
-	if (line.el[0].ins === "sumbox") return "";
+	if (line.el.length > 3) return "";
 
 	let margin_top = "";
 	if (line.att.qdtype === "left") margin_top = "";
@@ -119,5 +120,5 @@ const handleRules = (line, t) => {
 	let margin_left = "";
 	if (line.att.lindent !== "0") margin_top = `margin-left: ${line.att.lindent}p`;
 
-	return `<div class="hr-centered" style="height: 2.67px; border-bottom: ${t.att.d}pt solid ${t.att.color}; width: ${t.att.w}pt; ${margin_top} ${margin_left}"> </div>`;
+	return `<div class="rule" style="height: 2.67px; border-bottom: ${t.att.d}pt solid ${t.att.color}; width: ${t.att.w}pt; ${margin_top} ${margin_left} display: inline-block;"> </div>`;
 };
