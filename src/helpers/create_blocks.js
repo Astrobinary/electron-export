@@ -1,14 +1,19 @@
 const Handlebars = require("handlebars");
 
-exports = Handlebars.registerHelper("create_blocks", (page, block, options) => {
+exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, options) => {
 	let builtBlock = "";
 	let margin = "";
+
+	if (block.el[0].txt !== undefined) return;
+
+	//Handles float for pc2 blocks
+	let float = block.att.ipcnum === "2" && block.att.lipcblk ? "float: right;" : "";
 
 	//Handle graphics here
 	if (block.att.type === "graphic") return;
 
 	//Margin top for frills
-	if (block.att.type !== "main" && block.att.bisy < 300) margin = `margin-top: ${block.att.bisy}pt;`;
+	if (block.att.type !== "main" && block.att.bisy < 300) margin = `margin-top: 10pt;`;
 
 	//Check for sumbox frill
 	if (block.att.bsy > 500 && block.att.type === "frill") return;
@@ -18,13 +23,17 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, options) => {
 		builtBlock = `<div class="block-${block.att.type}" style="width: 100%; ${createSumbox(page[0].el)} display: inline-block; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	} else {
 		//Standard block
-		builtBlock = `<div class="block-${block.att.type}" style="width: 100%; display: inline-block; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
+		builtBlock = `<div class="block-${block.att.type}" style="width: ${block.att.bsx}pt; display: inline-block; ${float} vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	}
 
 	return new Handlebars.SafeString(builtBlock);
 });
 
 const createSumbox = el => {
+	let ruleStyle = "solid";
+	let padding = "padding: 10pt;";
 	let ruleAtt = el[0].el[0].el[1].att;
-	return `border: ${ruleAtt.w}pt solid ${ruleAtt.color}; padding: 10pt; box-sizing: border-box;`;
+	if (ruleAtt.w === "0.5") ruleAtt.w = "1";
+
+	return `border: ${ruleAtt.w}pt ${ruleStyle} ${ruleAtt.color}; ${padding} box-sizing: border-box;`;
 };

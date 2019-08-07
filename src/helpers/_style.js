@@ -11,33 +11,20 @@ module.exports.generatedCSS = (rootStyle, currentName) => {
 
 	if (att === undefined) return;
 
-	// //Handles font variant/font weight
-	// let fontWeight = "";
-
-	// if (att.hasOwnProperty("fv")) {
-	// 	if (att.fv === "1") {
-	// 		fontWeight = "font-weight: bold; font-style: normal;";
-	// 	} else if (att.fv === "2") {
-	// 		fontWeight = "font-weight: normal; font-style: italic;";
-	// 	} else if (att.fv === "3") {
-	// 		fontWeight = "font-weight: bold; font-style: italic;";
-	// 	} else {
-	// 		fontWeight = "font-weight: normal; font-style: normal;";
-	// 	}
-	// }
-
 	//Handles font family
 	let fontFamily = "";
 
 	if (att.font.includes("Arial")) {
-		fontFamily = "Arial, Sans-Serif";
+		fontFamily = "Arial";
 	} else if (att.font.includes("Times")) {
-		fontFamily = "Times New Roman, Times, Serif";
+		fontFamily = "Times New Roman";
 	} else if (att.font.includes("Helvetica")) {
-		fontFamily = "Helvetica, Arial, Sans-Serif";
+		fontFamily = "Helvetica";
+	} else {
+		fontFamily = "Arial";
 	}
 
-	return `font-size: ${att.size}pt; color: ${att.color}; font-family: ${fontFamily};`;
+	return `font-size: ${att.size}pt; font-family: ${fontFamily};`;
 };
 
 //Created style based on element attributes
@@ -66,12 +53,38 @@ module.exports.inlineCSS = (block, group, gindex) => {
 	}
 
 	style += `text-align: ${att.qdtype}; `;
-	style += `margin-top: ${parseInt(att.prelead) + parseInt(att.ldextra)}pt;`;
+
+	//Add margin if not first block in group (used for pc2)
+	if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
+		if (att.prelead === "0") {
+			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra) + parseFloat(att.yfinal)}pt;`;
+		} else {
+			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra)}pt;`;
+		}
+	} else {
+		if (gindex === 0 && group.att.class === "ftnote") {
+			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra) + 5}pt;`;
+		} else {
+			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra)}pt;`;
+		}
+	}
+
+	if (group.att.class === "sum1") {
+		if (group.el.length > 1)
+			if (group.el[1].att.lindent !== 0) {
+				style += `margin-left: ${group.el[1].att.lindent}pt; text-indent: -${group.el[1].att.lindent}pt;`;
+			}
+
+		style += `max-width: ${att.lnwidth}pt;`;
+	}
 
 	return style.trim();
 };
 
 module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIndex, lineIndex) => {
+	//Dont style empty text...
+	if (!/\S/.test(text)) return text;
+
 	let att, groupATT;
 
 	rootStyle.forEach(element => {
@@ -88,9 +101,6 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 		}
 	});
 
-	//Dont style empty text...
-	if (!/\S/.test(text)) return text;
-
 	let styles = "";
 	let styleWrap = "";
 
@@ -104,12 +114,9 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 		styles += `font-size: ${att.size}pt;`;
 	}
 
-	//If broken with a <qa> and alignment is different
-	//has to be last T in an line element
+	//If broken with a <qa> and alignment is different has to be last T in an line element
 	if (group.el[0].att.qdtype !== line.att.qdtype && line.att.quadset && line.el.length - 1 === tIndex && text.length > 1 && line.att.qdtype !== "forcej") {
-		// string is not empty and not just whitespace
 		if (/\S/.test(text)) {
-			//If the previous line has quadset then
 			if (group.el[lineIndex - 1].att.quadset === "true") text = `<div style="text-align: ${line.att.qdtype};">${text}</div>`;
 		}
 	}
@@ -123,13 +130,20 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 	}
 
 	if (att.fv === "1") {
-		return `<b ${styleWrap}>${text}</b>`;
+		text = `<b ${styleWrap}>${text}</b>`;
 	} else if (att.fv === "2") {
-		return `<i ${styleWrap}>${text}</i>`;
+		text = `<i ${styleWrap}>${text}</i>`;
 	} else if (att.fv === "3") {
-		return `<b><i ${styleWrap}>${text}</i></b>`;
+		text = `<b><i ${styleWrap}>${text}</i></b>`;
 	} else if (styles !== "") {
-		return `<font ${styleWrap}>${text}</font>`;
+		text = `<font ${styleWrap}>${text}</font>`;
+	}
+
+	//Wraps text around page ref link
+	if (tIndex > 1 && t.att.cgt) {
+		if (group.el[lineIndex].el[tIndex - 1].name === "xref") {
+			text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
+		}
 	}
 
 	return text;

@@ -9,7 +9,7 @@ require("../src/helpers");
 const samplePath = "C:\\Users\\padillab\\Documents\\Development\\electron-export\\samples\\";
 
 //Temp dev enviroments
-const data = JSON.parse(fs.readFileSync(`${samplePath}training\\json_test.json`, "utf8"));
+const data = JSON.parse(fs.readFileSync(`${samplePath}\\json_test.json`, "utf8"));
 
 let mainWindow;
 

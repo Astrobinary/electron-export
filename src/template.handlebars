@@ -7,7 +7,7 @@
                     {{#gather_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
                         {{#each this}} {{!-- Each block --}}
 
-                            {{#create_blocks ../this this}} {{!-- Generates block elements --}}
+                            {{#create_blocks ../this this @index}} {{!-- Generates block elements --}}
 
                                 {{#each this.el}} {{!-- Each group --}}
                                     
@@ -21,8 +21,8 @@
 
                         {{/each}}
                     {{/gather_blocks}}
-                <hr style="page-break-after: always; width: {{this.el.[0].el.[0].att.bsx}}pt; margin-top: 20pt; margin-bottom: 20pt; border: 0px; height: 3px; background-color: black" />
                 </div>
+                <hr style="page-break-after: always; width: 612pt; margin-top: 20pt; margin-bottom: 20pt; border: 0px; height: 3px; background-color: black" />
             {{/each}}
 
         {{/filter_scope}}{{!-- Pages element only --}}
