@@ -1,51 +1,29 @@
-//General CSS for tags generated from XML
-module.exports.generatedCSS = (rootStyle, currentName) => {
-	let att;
-
-	rootStyle.forEach(style => {
-		if (style.att.name === currentName) {
-			att = style.att;
-			return;
-		}
-	});
-
-	if (att === undefined) return;
-
-	//Handles font family
-	let fontFamily = "";
-
-	if (att.font.includes("Arial")) {
-		fontFamily = "Arial";
-	} else if (att.font.includes("Times")) {
-		fontFamily = "Times New Roman";
-	} else if (att.font.includes("Helvetica")) {
-		fontFamily = "Helvetica";
-	} else {
-		fontFamily = "Arial";
-	}
-
-	return `font-size: ${att.size}pt; font-family: ${fontFamily};`;
-};
-
 //Created style based on element attributes
-module.exports.inlineCSS = (block, group, gindex) => {
+module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 	let att;
 	let style = "";
+	let rootatt;
 
 	if (group.el[0].att.bmline) {
 		att = group.el[1].att;
 	} else {
 		att = group.el[0].att;
 	}
+	rootStyle.forEach(item => {
+		if (item.att.name === group.att.style) {
+			rootatt = item.att;
+			return;
+		}
+	});
 
 	//Indents and levels
 	if (group.el[0].att.lindent > 0) {
 		if (group.el[1] !== undefined) {
 			if (group.el[0].att.lindent > group.el[1].att.lindent) {
 				style += `text-indent: ${att.lindent - group.el[1].att.lindent}pt;`;
-				if (group.el[1].att.lindent > 0) style += `margin-left: ${group.el[1].att.lindent}pt;`;
+				if (group.el[1].att.lindent > 0) style += `padding-left: ${group.el[1].att.lindent}pt;`;
 			} else {
-				style += `margin-left: ${att.lindent}pt;`;
+				style += `padding-left: ${att.lindent}pt;`;
 			}
 		} else {
 			style += `text-indent: ${att.lindent}pt;`;
@@ -53,39 +31,62 @@ module.exports.inlineCSS = (block, group, gindex) => {
 	}
 
 	if (group.el[0].att.rindent > 0) {
-		style += `margin-right: ${att.rindent}pt;`;
+		style += `padding-left: ${att.rindent}pt;`;
 	}
 
-	style += `text-align: ${att.qdtype}; `;
+	if (!att.tbsa) style += `text-align: ${att.qdtype}; `;
 
 	//Add margin if not first block in group (used for pc2)
 	if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
 		if (att.prelead === "0") {
-			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra) + parseFloat(att.yfinal)}pt;`;
+			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
 		} else {
-			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra)}pt;`;
+			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 		}
 	} else {
 		if (gindex === 0 && group.att.class === "ftnote") {
-			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra) + 5}pt;`;
+			style += `margin-top: ${parseFloat(att.prelead) + 5}pt;`;
 		} else {
-			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.ldextra)}pt;`;
+			if (!att.tbsa) style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 		}
 	}
-
-	if (group.el[0].el[0].ins === "textbox") {
-		style += `border: 1px solid; padding: ${group.el[1].att.prelead}pt; margin-top: ${group.el[1].att.prelead}pt;`;
-	}
-
 	if (group.att.class === "sum1") {
 		if (group.el.length > 1)
 			if (group.el[1].att.lindent !== 0) {
 				style += `margin-left: ${group.el[1].att.lindent}pt; text-indent: -${group.el[1].att.lindent}pt;`;
 			}
 
-		style += `max-width: ${att.lnwidth}pt;`;
+		style += `max-width: ${group.el[0].att.lnwidth}pt;`;
 	}
 
+	let fontFamily = "";
+
+	if (rootatt !== undefined) {
+		if (rootatt.font.includes("Arial")) {
+			fontFamily = "Arial";
+		} else if (rootatt.font.includes("Times")) {
+			fontFamily = "Times New Roman";
+		} else if (rootatt.font.includes("Helvetica")) {
+			fontFamily = "Helvetica";
+		} else {
+			fontFamily = "Arial";
+		}
+
+		let lineHeight = `line-height: ${parseFloat(rootatt.size) + parseFloat(att.ldextra)}pt;`;
+
+		if (group.el[0].hasOwnProperty("el")) {
+			if (group.el[0].el.length > 1) {
+				if (group.el[0].el[1].name === "rule") {
+					lineHeight = `line-height: 0pt;`;
+				}
+			}
+		}
+
+		style += `font-size: ${rootatt.size}pt; ${lineHeight} font-family: ${fontFamily};`;
+	}
+
+	// if (att.tbsa) style += `display: inline-block;`;
+	if (extraStyle !== undefined) style += extraStyle;
 	return style.trim();
 };
 
@@ -96,6 +97,9 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 	text = text.replace(/>/gm, "&gt;");
 
 	let att, groupATT;
+
+	let shapeOffset = 0;
+	let hasShape = false;
 
 	rootStyle.forEach(element => {
 		if (element.att.name === style) {
@@ -133,8 +137,21 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 		}
 	}
 
+	line.el.forEach(element => {
+		if (element.name === "shape") hasShape = true;
+		if (element.att) {
+			shapeOffset += parseFloat(element.att.x);
+		}
+	});
+
 	//Handles X value
-	if (t.att.x > 0) styles += `padding-left: ${t.att.x - 3}pt;`;
+	if (t.att.x > 0) {
+		if (hasShape) {
+			if (shapeOffset !== 0) styles += `padding-left: ${shapeOffset}pt;`;
+		} else {
+			if (t.att.x !== "0") styles += `padding-left: ${parseFloat(t.att.x)}pt;`;
+		}
+	}
 
 	// Handles Y value
 	if (t.att.y > 0) styles += `transform: translateY(${t.att.y}pt); display: inline-block;`;
@@ -149,7 +166,7 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 	}
 
 	if (text === "󰄝") text = `<font style=" font-size: 16pt; line-height: 12pt;">&#8226;</font>`; //Bullet to html??
-	if (t.att.y < 0) text = `<sup style="line-height: 1; font-size: x-small;">${text}</sup>`;
+	// if (t.att.y < 0) text = `<sup>${text}</sup>`;
 	if (t.att.ul1) text = `<u>${text}</u>`;
 
 	if (styles !== "") {
@@ -178,4 +195,9 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 	if (t.att.hasOwnProperty("ul8") && t.att.hasOwnProperty("ul10")) text = `<font  style="text-decoration: line-through border-bottom: 3px double;">${text}</font>`;
 
 	return text;
+};
+
+module.exports.tableStyle = (tgroup, col) => {
+	// console.log(col.el[0].el.length);
+	return "";
 };

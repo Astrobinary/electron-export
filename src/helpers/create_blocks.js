@@ -35,5 +35,5 @@ const createSumbox = el => {
 	let ruleAtt = el[0].el[0].el[1].att;
 	if (ruleAtt.w === "0.5") ruleAtt.w = "1";
 
-	return `border: ${ruleAtt.w}pt ${ruleStyle} ${ruleAtt.color}; ${padding} box-sizing: border-box;`;
+	return `border: ${ruleAtt.w}pt ${ruleStyle} ${ruleAtt.color}; ${padding}`;
 };

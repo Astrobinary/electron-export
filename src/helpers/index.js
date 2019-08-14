@@ -43,3 +43,23 @@ exports.hasHang = lines => {
 
 	return;
 };
+
+exports.toRGB = cmyk => {
+	const CMYK = cmyk.split(" ");
+	let result = [];
+
+	const c = CMYK[0];
+	const m = CMYK[1];
+	const y = CMYK[2];
+	const k = CMYK[3];
+
+	result.push(1 - Math.min(1, c * (1 - k) + k));
+	result.push(1 - Math.min(1, m * (1 - k) + k));
+	result.push(1 - Math.min(1, y * (1 - k) + k));
+
+	result[0] = Math.round(result[0] * 255);
+	result[1] = Math.round(result[1] * 255);
+	result[2] = Math.round(result[2] * 255);
+
+	return `rgb(${result[0]}, ${result[1]}, ${result[2]});`;
+};

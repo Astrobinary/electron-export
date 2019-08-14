@@ -6,31 +6,44 @@ Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, optio
 	if (group.att === undefined) {
 		return;
 	}
-	let generatedCSS = style.generatedCSS(rootStyle, group.att.style);
-	let inlineCSS = style.inlineCSS(block, group, gindex);
+	// let generatedCSS = style.generatedCSS(rootStyle, group.att.style);
+	let inlineCSS = style.inlineCSS(rootStyle, block, group, gindex);
 	let blockTag = "";
 
 	//Checks for hanging elements such as bullets, ftnotes, etc.
 	if (help.hasHang(group.el)) {
-		blockTag = createHangTag(generatedCSS, inlineCSS, group.att.style, options);
+		blockTag = createHangTag(inlineCSS, group.att.style, options);
 		return new Handlebars.SafeString(blockTag);
 	}
 
 	//Checks if current group is a table
 	if (group.name === "table") {
-		blockTag = `<div style="text-align: center; margin: 20px 0; color: #c7c7c7;">TABLE PLACEHOLDER</div>`;
+		blockTag = createTable(block, options.data._parent.index, group.el[0], options);
 		return new Handlebars.SafeString(blockTag);
 	}
 
-	blockTag = `<div class="${group.att.style}" style="${generatedCSS} ${inlineCSS}">${options.fn(this)}</div>`;
+	blockTag = `<div class="${group.att.style}" style="${inlineCSS}">${options.fn(this)}</div>`;
 	return new Handlebars.SafeString(blockTag);
 });
 
-const createHangTag = (generatedCSS, inlineCSS, tag, options) => {
-	const tableStart = `<table class="${tag}" cellpadding="0" cellspacing="0" width="100%" style="${inlineCSS} ${generatedCSS}">`;
+const createHangTag = (inlineCSS, tag, options) => {
+	const tableStart = `<table class="${tag}" cellpadding="0" cellspacing="0" width="100%" style="${inlineCSS}">`;
 	const tableEnd = `<tbody><tr style="vertical-align: top;">${options.fn(this)}</tr></tbody></table>`;
 
 	const table = tableStart + tableEnd;
+
+	return table;
+};
+
+const createTable = (block, blockIndex, tgroup, options) => {
+	let margin = "";
+
+	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt;`;
+	margin += `margin-top: 6pt;`;
+
+	// ${tgroup.el[tgroup.el.length - 1].el[0].att.row_pos}
+
+	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${tgroup.att.tbwidth}pt; ${margin} border-collapse: collapse;"><tbody>${options.fn(this)}</tbody></table>`;
 
 	return table;
 };
