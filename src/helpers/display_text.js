@@ -111,26 +111,24 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 
 	if (colspec === undefined) return;
 
+	// console.log(`${tgroup.att.hdstyle_rows} ----- ${row.att.rowrel}`);
+
 	if (colspec.att.tbclgut > 0) {
-		rowStyle += `padding-left: ${colspec.att.tbclwsp}pt; `;
-		totalGut += parseFloat(colspec.att.tbclwsp);
-	}
-	if (colspec.att.tbcrgut > 0) {
-		rowStyle += `padding-right: ${colspec.att.tbcrwsp}pt; `;
-		totalGut += parseFloat(colspec.att.tbcrwsp);
-	}
+		if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
+			//Table Header Rows
+			rowStyle += `margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${colspec.att.tbclwsp}pt;`;
+			rowStyle += `margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`;
+		}
 
-	// rowStyle += `padding-bottom: ${parseFloat(row.att.row_gutter)}pt;`;
-	rowStyle += `height: ${row.att.tbrdepth - row.att.row_gutter / 2}pt;`;
-
-	if (col.att.alfleft !== undefined) {
-		isNumber = true;
-		addedStyle += `text-align: ${tgroup.att.hj_mode};`;
+		totalGut += parseFloat(colspec.att.tbclgut) + parseFloat(colspec.att.tbcrgut);
 	}
 
+	rowStyle += `width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`;
+
+	// rowStyle += `height: ${row.att.tbrdepth - row.att.row_gutter / 2}pt;`;
 	rowStyle += `white-space: nowrap;`;
 
-	rowStyle += `width: ${parseFloat(colspec.att.colwidth) - totalGut}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`;
+	if (col.att.alfleft !== undefined) isNumber = true;
 
 	let colspan = "";
 
@@ -155,7 +153,7 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 		rowStyle += `border-left: 1px solid black;`;
 	}
 
-	if(row.att.row_gutter !== "0") rowStyle += `padding-top: ${row.att.row_gutter / 2}pt;`;
+	if (row.att.row_gutter !== "0") rowStyle += `padding-top: ${row.att.row_gutter / 2}pt;`;
 
 	col.el.forEach((group, groupIndex) => {
 		group.el.forEach((line, lineIndex) => {
@@ -166,6 +164,15 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 			}
 
 			if (!line.el) return;
+
+			if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
+				//header row
+			} else {
+				if (col.att.alfleft !== undefined) {
+					let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
+					addedStyle += `margin-left: ${leftSpace.toFixed(2)}pt;`;
+				}
+			}
 
 			addedStyle += `margin-top: ${line.att.prelead}pt;`;
 
@@ -192,8 +199,7 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 		});
 	});
 
-
-	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${rowStyle} ${backgroundColor} " >${text}</td>`;
+	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${rowStyle} ${backgroundColor} display: table-cell;" >${text}</td>`;
 };
 
 const checkXVrule = row => {
