@@ -26,7 +26,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 				style += `padding-left: ${att.lindent}pt;`;
 			}
 		} else {
-			style += `text-indent: ${att.lindent}pt;`;
+			if (!att.tbsa) style += `text-indent: ${att.lindent}pt;`;
 		}
 	}
 
@@ -39,7 +39,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 	//Add margin if not first block in group (used for pc2)
 	if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
 		if (att.prelead === "0") {
-			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
+			if (!att.tbsa) style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
 		} else {
 			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 		}
@@ -90,7 +90,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 	return style.trim();
 };
 
-module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIndex, lineIndex) => {
+module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIndex, lineIndex, elIndex) => {
 	//Dont style empty text...
 	if (!/\S/.test(text)) return text;
 	text = text.replace(/</gm, "&lt;");
@@ -137,19 +137,27 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 		}
 	}
 
-	line.el.forEach(element => {
+	line.el.forEach((element, index) => {
 		if (element.name === "shape") hasShape = true;
+		if (element.hasOwnProperty("att"))
+			if (element.att.trace === "delete" && element.att.x > 0) {
+				hasShape = true;
+			}
 		if (element.att) {
 			shapeOffset += parseFloat(element.att.x);
 		}
 	});
 
 	//Handles X value
-	if (t.att.x > 0) {
+	if (t.att.x > 0 || shapeOffset !== 0) {
 		if (hasShape) {
-			if (shapeOffset !== 0) styles += `padding-left: ${shapeOffset}pt;`;
+			if (shapeOffset !== 0 && t.el[0].txt.length > 1) {
+				styles += `padding-left: ${shapeOffset}pt;`;
+			}
 		} else {
-			if (t.att.x !== "0") styles += `padding-left: ${parseFloat(t.att.x)}pt;`;
+			if (t.att.x !== "0") {
+				if (elIndex < 1) styles += `padding-left: ${parseFloat(t.att.x)}pt;`;
+			}
 		}
 	}
 

@@ -18,7 +18,7 @@ Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, optio
 
 	//Checks if current group is a table
 	if (group.name === "table") {
-		blockTag = createTable(block, options.data._parent.index, group.el[0], options);
+		blockTag = createTable(block, options.data._parent.index, group, group.el[0], options);
 		return new Handlebars.SafeString(blockTag);
 	}
 
@@ -35,15 +35,18 @@ const createHangTag = (inlineCSS, tag, options) => {
 	return table;
 };
 
-const createTable = (block, blockIndex, tgroup, options) => {
+const createTable = (block, blockIndex, frame, tgroup, options) => {
 	let margin = "";
+	let border = "";
+
+	if (frame.att.frame !== "none") border = `border: 1pt solid;`;
 
 	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt;`;
 	margin += `margin-top: 6pt;`;
 
 	// ${tgroup.el[tgroup.el.length - 1].el[0].att.row_pos}
 
-	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${tgroup.att.tbwidth}pt; ${margin} border-collapse: collapse;"><tbody>${options.fn(this)}</tbody></table>`;
+	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${tgroup.att.tbwidth}pt; ${margin} ${border} border-collapse: collapse;"><tbody>${options.fn(this)}</tbody></table>`;
 
 	return table;
 };

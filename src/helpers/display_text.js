@@ -90,7 +90,7 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 		let colText = "";
 
 		row.el.forEach((col, colIndex) => {
-			colText += parseColumn(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec, checkXVrule(row));
+			colText += parseColumn(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec, checkChgrow(row));
 		});
 
 		text += `<tr row="${row.att.rowrel}">${colText}</tr>`;
@@ -99,7 +99,7 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 	return text;
 };
 
-const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs, xVrule) => {
+const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs, ruleprops) => {
 	// if (col.att === undefined) return;
 	let colspec = colspecs[col.att.col - 1];
 	let rowStyle = "";
@@ -111,25 +111,6 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 
 	if (colspec === undefined) return;
 
-	// console.log(`${tgroup.att.hdstyle_rows} ----- ${row.att.rowrel}`);
-
-	if (colspec.att.tbclgut > 0) {
-		if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
-			//Table Header Rows
-			rowStyle += `margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${colspec.att.tbclwsp}pt;`;
-			rowStyle += `margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`;
-		}
-
-		totalGut += parseFloat(colspec.att.tbclgut) + parseFloat(colspec.att.tbcrgut);
-	}
-
-	rowStyle += `width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`;
-
-	// rowStyle += `height: ${row.att.tbrdepth - row.att.row_gutter / 2}pt;`;
-	rowStyle += `white-space: nowrap;`;
-
-	if (col.att.alfleft !== undefined) isNumber = true;
-
 	let colspan = "";
 
 	if (col.att.namest !== undefined) {
@@ -139,42 +120,87 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 		colspan = `colspan="${parseInt(end) - parseInt(start) + 1}"`;
 	}
 
+	if (colspec.att.tbclgut > 0) {
+		if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
+			rowStyle += `margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${colspec.att.tbclwsp}pt;`;
+
+			if (col.att.namest !== undefined) {
+				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
+					rowStyle += `margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`;
+				}
+			} else {
+				if (tgroup.att.cols !== col.att.col) rowStyle += `margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`;
+			}
+		}
+
+		totalGut += parseFloat(colspec.att.tbclgut) + parseFloat(colspec.att.tbcrgut);
+	}
+
+	rowStyle += `width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`;
+
+	rowStyle += `height: ${row.att.tbrdepth}pt;`;
+	rowStyle += `white-space: nowrap;`;
+
+	if (col.att.alfleft !== undefined) isNumber = true;
+
 	let rowspan = "";
 
 	if (col.att.morerows !== undefined) {
 		colspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 	}
 
-	if (xVrule > 0) {
-		if (col.att.col < xVrule && col.att.hasOwnProperty("rule_info")) {
+	if (ruleprops.xvrule > 0) {
+		if (col.att.col < ruleprops.xvrule && col.att.hasOwnProperty("rule_info")) {
+			rowStyle += `border-left: 1px solid black;`;
+		} else if (colspec.att.tbclrule > 0) {
 			rowStyle += `border-left: 1px solid black;`;
 		}
-	} else if (colspec.att.tbclrule > 0) {
-		rowStyle += `border-left: 1px solid black;`;
+	} else {
+		if (colspec.att.tbclrule > 0) rowStyle += `border-left: 1px solid black;`;
+		if (colspec.att.tbcrrule > 0) rowStyle += `border-right: 1px solid black;`;
 	}
 
-	if (row.att.row_gutter !== "0") rowStyle += `padding-top: ${row.att.row_gutter / 2}pt;`;
+	if (ruleprops.rule > 0) {
+		if (col.att.col < ruleprops.rule && col.att.hasOwnProperty("rule_info")) {
+			addedStyle += `border-bottom: 1px solid black;`;
+		}
+	}
 
 	col.el.forEach((group, groupIndex) => {
 		group.el.forEach((line, lineIndex) => {
 			if (col.att.rule_info && group.el.length - 1 === lineIndex) {
-				if (col.att.rule_info === "1 0 0") {
-					addedStyle += `border-bottom: 1pt solid;`;
-				}
+				let rgb = "rgb(0, 0, 0)";
+				if (row.att["rcolor-cmyk"] !== undefined) rgb = help.toRGB(row.att["rcolor-cmyk"]);
+
+				let thickness = "1pt";
+				if (row.att.rthk !== undefined && parseFloat(row.att.rthk) > 0.5) thickness = row.att.rthk;
+
+				if (col.att.rule_info === "1 0 0") addedStyle += `border-bottom: ${thickness} solid ${rgb};`; //urule
+				if (col.att.rule_info === "1 2 0") addedStyle += `border-bottom: ${thickness} solid ${rgb};`; //trule
+				if (col.att.rule_info === "3 2 0") addedStyle += `border-bottom: 3pt double ${rgb};`; // doubel trule
+				if (col.att.rule_info === "1 1 0") rowStyle += `border-bottom: ${thickness} solid ${rgb};`; //hrule
 			}
 
 			if (!line.el) return;
 
+			if (line.att.lindent > 0) addedStyle += `padding-left: ${line.att.lindent}pt;`;
+
 			if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
-				//header row
 			} else {
-				if (col.att.alfleft !== undefined) {
-					let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
-					addedStyle += `margin-left: ${leftSpace.toFixed(2)}pt;`;
+				let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
+
+				if (leftSpace !== 0) {
+					if (leftSpace / 2 + leftSpace < colspec.att.tbcmeas) {
+						if (isNumber) addedStyle += `margin-left: ${leftSpace.toFixed(2)}pt;`;
+						if (isNumber) if (tgroup.att.cols !== col.att.col) addedStyle += `margin-right: ${leftSpace.toFixed(2)}pt;`;
+					} else {
+						addedStyle += `margin-left: ${colspec.att.tbclwsp}pt;`;
+						if (tgroup.att.cols !== col.att.col) addedStyle += `margin-right: ${colspec.att.tbcrwsp}pt;`;
+					}
 				}
 			}
 
-			addedStyle += `margin-top: ${line.att.prelead}pt;`;
+			if (line.att.prelead > 0) addedStyle += `margin-top: ${line.att.prelead}pt;`;
 
 			text += `<div class="${group.att.style}" style="${style.inlineCSS(rootStyle, block, group, groupIndex, addedStyle)} ">`;
 
@@ -190,7 +216,7 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 
 					let innertext = `${parseText(rootStyle, group, group.att.style, line, lineIndex, t, tIndex, true, isNumber)}`;
 
-					// if (innertext === "" && !isNumber && !t.att.cgt && !parseInt(line.att.xfinal) < 1) innertext = `&nbsp;`;
+					if (innertext === "" && addedStyle.includes("border-bottom")) innertext = `&nbsp;`;
 					text += innertext;
 				}
 			});
@@ -202,24 +228,34 @@ const parseColumn = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, col
 	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${rowStyle} ${backgroundColor} display: table-cell;" >${text}</td>`;
 };
 
-const checkXVrule = row => {
-	let xVrule = 0;
+const checkChgrow = row => {
+	let rulestats = { xvrule: 0, xrule: 0, rule: 0 };
 
 	row.el.forEach(entry => {
 		entry.el.forEach(group => {
 			group.el.forEach(line => {
 				if (line.hasOwnProperty("el"))
 					line.el.forEach(t => {
-						if (t.ins === "chgrow;xvrule") {
-							xVrule = parseInt(entry.att.col);
-							return;
+						if (t.ins === undefined) return;
+						let ins = t.ins;
+
+						if (ins === "chgrow;xvrule") {
+							rulestats.xvrule = parseInt(entry.att.col);
+						}
+
+						if (ins.includes("chgrow;xrule")) {
+							rulestats.xrule = parseInt(entry.att.col);
+						}
+
+						if (ins.includes("chgrow;trule")) {
+							rulestats.rule = parseInt(entry.att.col);
 						}
 					});
 			});
 		});
 	});
 
-	return xVrule;
+	return rulestats;
 };
 
 const parseText = (rootStyle, group, groupStyle, line, lineIndex, t, tIndex, isTable, isNumber) => {
@@ -249,10 +285,16 @@ const parseText = (rootStyle, group, groupStyle, line, lineIndex, t, tIndex, isT
 					}
 				}
 
-				if (isTable && isNumber) el.txt = el.txt.trim();
+				if (isTable && /\d/.test(el.txt) && isNumber) {
+					if (/\$/.test(el.txt)) {
+						el.txt = el.txt.replace(/ +?/g, "");
+					} else {
+						el.txt = el.txt.trim();
+					}
+				}
 
 				//Wrap text with basic styling
-				text += style.wrapText(el.txt, t.att.style, rootStyle, group, line, groupStyle, t, tIndex, lineIndex);
+				text += style.wrapText(el.txt, t.att.style, rootStyle, group, line, groupStyle, t, tIndex, lineIndex, elIndex);
 			}
 		}
 	});
