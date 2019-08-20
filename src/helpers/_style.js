@@ -1,5 +1,7 @@
+const help = require("./index");
+
 //Created style based on element attributes
-module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
+module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 	let att;
 	let style = "";
 	let rootatt;
@@ -26,7 +28,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 				style += `padding-left: ${att.lindent}pt;`;
 			}
 		} else {
-			if (!att.tbsa) style += `text-indent: ${att.lindent}pt;`;
+			style += `text-indent: ${att.lindent}pt;`;
 		}
 	}
 
@@ -34,12 +36,12 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 		style += `padding-left: ${att.rindent}pt;`;
 	}
 
-	if (!att.tbsa) style += `text-align: ${att.qdtype}; `;
+	style += `text-align: ${att.qdtype}; `;
 
 	//Add margin if not first block in group (used for pc2)
 	if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
 		if (att.prelead === "0") {
-			if (!att.tbsa) style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
+			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
 		} else {
 			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 		}
@@ -47,7 +49,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 		if (gindex === 0 && group.att.class === "ftnote") {
 			style += `margin-top: ${parseFloat(att.prelead) + 5}pt;`;
 		} else {
-			if (!att.tbsa) style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 		}
 	}
 	if (group.att.class === "sum1") {
@@ -85,21 +87,18 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, extraStyle) => {
 		style += `font-size: ${rootatt.size}pt; ${lineHeight} font-family: ${fontFamily};`;
 	}
 
-	// if (att.tbsa) style += `display: inline-block;`;
-	if (extraStyle !== undefined) style += extraStyle;
 	return style.trim();
 };
 
-module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIndex, lineIndex, elIndex) => {
+module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t, tIndex, lineIndex, elIndex) => {
+	let att, groupATT;
+	let styles = "";
+	let styleWrap = "";
+
 	//Dont style empty text...
 	if (!/\S/.test(text)) return text;
 	text = text.replace(/</gm, "&lt;");
 	text = text.replace(/>/gm, "&gt;");
-
-	let att, groupATT;
-
-	let shapeOffset = 0;
-	let hasShape = false;
 
 	rootStyle.forEach(element => {
 		if (element.att.name === style) {
@@ -114,9 +113,6 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 			return;
 		}
 	});
-
-	let styles = "";
-	let styleWrap = "";
 
 	//Checks for different color
 	if (att.color !== "#000000") {
@@ -137,29 +133,9 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 		}
 	}
 
-	line.el.forEach((element, index) => {
-		if (element.name === "shape") hasShape = true;
-		if (element.hasOwnProperty("att"))
-			if (element.att.trace === "delete" && element.att.x > 0) {
-				hasShape = true;
-			}
-		if (element.att) {
-			shapeOffset += parseFloat(element.att.x);
-		}
-	});
-
-	//Handles X value
-	if (t.att.x > 0 || shapeOffset !== 0) {
-		if (hasShape) {
-			if (shapeOffset !== 0 && t.el[0].txt.length > 1) {
-				styles += `padding-left: ${shapeOffset}pt;`;
-			}
-		} else {
-			if (t.att.x !== "0") {
-				if (elIndex < 1) styles += `padding-left: ${parseFloat(t.att.x)}pt;`;
-			}
-		}
-	}
+	if (t.att.hasOwnProperty("ul8")) styles += `text-decoration: line-through;`;
+	if (t.att.hasOwnProperty("ul10")) styles += `border-bottom: 3px double;`;
+	if (t.att.hasOwnProperty("ul8") && t.att.hasOwnProperty("ul10")) style += `text-decoration: line-through; border-bottom: 3px double;`;
 
 	// Handles Y value
 	if (t.att.y > 0) styles += `transform: translateY(${t.att.y}pt); display: inline-block;`;
@@ -174,7 +150,7 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 	}
 
 	if (text === "󰄝") text = `<font style=" font-size: 16pt; line-height: 12pt;">&#8226;</font>`; //Bullet to html??
-	// if (t.att.y < 0) text = `<sup>${text}</sup>`;
+
 	if (t.att.ul1) text = `<u>${text}</u>`;
 
 	if (styles !== "") {
@@ -192,20 +168,71 @@ module.exports.wrapText = (text, style, rootStyle, group, line, groupCSS, t, tIn
 	}
 
 	//Wraps text around page ref link
-	if (tIndex > 1 && t.att.cgt) {
-		if (group.el[lineIndex].el[tIndex - 1].name === "xref") {
-			text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
-		}
-	}
-
-	if (t.att.hasOwnProperty("ul8")) text = `<font style="text-decoration: line-through">${text}</font>`;
-	if (t.att.hasOwnProperty("ul10")) text = `<font style="border-bottom: 3px double;">${text}</font>`;
-	if (t.att.hasOwnProperty("ul8") && t.att.hasOwnProperty("ul10")) text = `<font  style="text-decoration: line-through border-bottom: 3px double;">${text}</font>`;
+	if (tIndex > 1 && t.att.cgt) if (group.el[lineIndex].el[tIndex - 1].name === "xref") text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
 
 	return text;
 };
 
-module.exports.tableStyle = (tgroup, col) => {
-	// console.log(col.el[0].el.length);
-	return "";
+module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
+	const styleClass = col.el[0].att.style;
+	const firstLine = col.el[0].el[0];
+	const isLast = isLastColumn(tgroup, col);
+
+	let rowStyle = [];
+	let rootAtt;
+
+	rootStyle.forEach(item => {
+		if (item.att.name === styleClass) {
+			rootAtt = item.att;
+			return;
+		}
+	});
+
+	//Cell Header rows
+	if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
+		if (colspec.att.tbclwsp !== "0") rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${colspec.att.tbclwsp}pt;`);
+		if (colspec.att.tbcrwsp !== "0") if (!isLast) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
+	}
+
+	// if (!isLast) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
+
+	//Cell text size
+	rowStyle.push(`font-size: ${rootAtt.size}pt;`);
+
+	//Cell line height
+	rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
+
+	//Cell text color
+	if (rootAtt.color !== "#000000") rowStyle.push(`color: ${help.toRGB(rootAtt["color-cmyk"])};`);
+
+	//Cell width/height
+	rowStyle.push(`width: ${colspec.att.colwidth}pt;`);
+	rowStyle.push(`height: ${row.att.tbrdepth}pt;`);
+
+	//Cell Hrule
+	if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk} solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
+
+	return rowStyle.join(" ");
+};
+
+const isLastColumn = (tgroup, col) => {
+	if (tgroup.att.cols === col.att.col) return true;
+
+	if (!col.att.hasOwnProperty("namest")) return false;
+
+	if (parseInt(tgroup.att.cols) === parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) return true;
+
+	return false;
+};
+
+module.exports.handleInstructions = el => {
+	if (el.ins === "qa") return `<br/>`;
+	if (el.ins.includes("link;")) return `<a href="${el.ins.slice(5)}">`;
+	if (el.ins === "/link") return `</a>`;
+	if (el.ins === "sup") return `<sup style="line-height: 0;">`;
+	if (el.ins === "reset") return `</sup>`;
+
+	if (el.ins.includes("rx;")) return `<a name="${el.ins.slice(3)}"></a>`;
+
+	return null;
 };

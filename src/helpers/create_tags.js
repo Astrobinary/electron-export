@@ -41,12 +41,12 @@ const createTable = (block, blockIndex, frame, tgroup, options) => {
 
 	if (frame.att.frame !== "none") border = `border: 1pt solid;`;
 
-	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt;`;
+	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt; `;
 	margin += `margin-top: 6pt;`;
 
 	// ${tgroup.el[tgroup.el.length - 1].el[0].att.row_pos}
 
-	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${tgroup.att.tbwidth}pt; ${margin} ${border} border-collapse: collapse;"><tbody>${options.fn(this)}</tbody></table>`;
+	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${tgroup.att.tbwidth}pt; ${margin}${border} border-collapse: collapse;"><tbody>${options.fn(this)}</tbody></table>`;
 
 	return table;
 };
