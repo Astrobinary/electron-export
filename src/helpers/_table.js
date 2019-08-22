@@ -37,7 +37,13 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 
 		group.el.forEach((line, lineIndex) => {
 			if (line.el === undefined) return;
-			maxWidth = Math.max(maxWidth, line.att.lnwidth);
+			maxWidth = Math.max(maxWidth, parseFloat(line.att.lnwidth));
+
+			if (parseFloat(line.att.bandwidth) > 2) divStyle.push(`word-spacing: ${(parseFloat(line.att.bandwidth) - 2).toFixed(2)}pt;`);
+
+			if (col.att.rule_info === '1 0 0') divStyle.push(`border-bottom: 1pt solid;`); //urule
+			if (col.att.rule_info === '1 2 0') divStyle.push(`border-bottom: 1pt solid;`); //trule
+			if (col.att.rule_info === '3 2 0') divStyle.push(`border-bottom: 3pt double;`); // double trule
 
 			if (rowIndex + 1 >= tgroup.att.hdstyle_rows) {
 				let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
@@ -97,7 +103,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 			});
 		});
 
-		if (col.att.col === '1') divStyle.push(`max-width: ${maxWidth}pt`);
+		if (rowIndex + 1 > tgroup.att.hdstyle_rows) if (col.att.col === '1') divStyle.push(`max-width: ${maxWidth + 1}pt`);
 	});
 	return `<div style="${divStyle.join(' ')}">${text}</div>`;
 };

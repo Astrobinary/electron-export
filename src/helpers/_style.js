@@ -217,7 +217,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (rootAtt.color !== '#000000') rowStyle.push(`color: ${help.toRGB(rootAtt['color-cmyk'])};`);
 
 	//Cell width/height
-	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`);
+	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
 	if (col.att.col === '1') rowStyle.push(`min-width: ${colspec.att.tbcmeas}pt;`);
 
 	//Last row
