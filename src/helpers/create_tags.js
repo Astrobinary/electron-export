@@ -28,7 +28,7 @@ Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, optio
 
 const createHangTag = (inlineCSS, tag, options) => {
 	const tableStart = `<table class="${tag}" cellpadding="0" cellspacing="0" width="100%" style="${inlineCSS}">`;
-	const tableEnd = `<tbody><tr style="vertical-align: top;">${options.fn(this)}</tr></tbody></table>`;
+	const tableEnd = `<tr style="vertical-align: top;">${options.fn(this)}</tr></table>`;
 
 	const table = tableStart + tableEnd;
 
@@ -46,7 +46,7 @@ const createTable = (block, blockIndex, frame, tgroup, options) => {
 
 	// ${tgroup.el[tgroup.el.length - 1].el[0].att.row_pos}
 
-	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${tgroup.att.tbwidth}pt; ${margin}${border} border-collapse: collapse;"><tbody>${options.fn(this)}</tbody></table>`;
+	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${tgroup.att.tbwidth}pt; ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
 
 	return table;
 };
