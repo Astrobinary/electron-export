@@ -12,6 +12,10 @@
 /build
 /dist
 
+# development
+/samples
+/output
+
 # misc
 .DS_Store
 .env.local
