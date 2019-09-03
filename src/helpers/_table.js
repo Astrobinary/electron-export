@@ -21,6 +21,8 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 	let text = '';
 	let divStyle = [];
 
+	const isLast = style.isLastColumn(tgroup, col);
+
 	if (col.att.hasOwnProperty('alfleft')) divStyle.push(`white-space: nowrap;`);
 
 	col.el.forEach((group, groupIndex) => {
@@ -32,31 +34,56 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 		//Handles 2nd line indent
 		if (group.el.length > 1)
 			if (group.el[1].att.lindent > group.el[0].att.lindent) {
-				divStyle.push(`margin-left: ${group.el[1].att.lindent}pt; text-indent: -${group.el[1].att.lindent}pt;`);
+				divStyle.push(`margin-left: ${group.el[1].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
 			}
 
 		group.el.forEach((line, lineIndex) => {
 			if (line.el === undefined) return;
-			maxWidth = Math.max(maxWidth, parseFloat(line.att.lnwidth));
-
-			if (parseFloat(line.att.bandwidth) > 2) divStyle.push(`word-spacing: ${(parseFloat(line.att.bandwidth) - 2).toFixed(2)}pt;`);
 
 			if (col.att.rule_info === '1 0 0') divStyle.push(`border-bottom: 1pt solid;`); //urule
 			if (col.att.rule_info === '1 2 0') divStyle.push(`border-bottom: 1pt solid;`); //trule
 			if (col.att.rule_info === '3 2 0') divStyle.push(`border-bottom: 3pt double;`); // double trule
 
-			if (rowIndex + 1 >= tgroup.att.hdstyle_rows) {
-				let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
+			let currentWidth = 0;
 
-				if (leftSpace !== 0) {
-					if (leftSpace > parseInt(colspec.att.tbclwsp)) {
-						if (isNumber) divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
-						if (isNumber) if (tgroup.att.cols !== col.att.col) divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
+			if (line.att.qdtype !== 'center' && group.el.length > 1) {
+				currentWidth = parseFloat(line.att.lnwidth) - 5.25;
+			}
+
+			maxWidth = Math.max(maxWidth, currentWidth);
+
+			if (rowIndex + 1 > tgroup.att.hdstyle_rows) {
+				let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
+				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
+				if (col.att.col === '1' && line.att.last && line.att.qdtype !== 'center' && maxWidth !== 0) {
+					divStyle.push(`width: ${maxWidth}pt;`);
+				} else if (isNumber && line.att.first && line.att.last && line.att.qdtype === 'center') {
+					divStyle.push(`width: ${line.att.lnwidth}pt;`);
+				} else {
+					if (isNumber) divStyle.push(`width: ${line.att.lnwidth}pt;`);
+				}
+
+				if (leftSpace !== 0 && isNumber && line.att.last) {
+					if (leftSpace > parseInt(colspec.att.tbclwsp) / 2) {
+						divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
+						if (!isLast) {
+							divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
+						} else {
+							divStyle.push(`margin-right: ${parseInt(colspec.att.tbclwsp)}pt;`);
+						}
 					} else {
 						divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
-						if (tgroup.att.cols !== col.att.col) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+						if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+					}
+				} else {
+					if (!isNumber && !isLast && line.att.last) {
+						divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+					} else {
+						if (line.att.last) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 					}
 				}
+			} else {
+				if (col.att.col === '1' && !isLast && line.att.last) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 			}
 
 			line.el.forEach((t, tIndex) => {
@@ -64,7 +91,20 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					const ins = style.handleInstructions(t);
 					if (ins !== null) text += ins;
 				} else {
-					if (t.att.x > 0 && parseInt(col.att.col) > 1) text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
+					if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
+						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
+						divStyle.push(`width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
+					} else if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length < 1) {
+						if (tIndex > 1) {
+							if (line.el[tIndex - 1].name === 'shape') {
+								divStyle.push(`padding-left: ${parseFloat(t.att.x) - Math.abs(line.el[tIndex - 1].att.x)}pt;`);
+							} else {
+								divStyle.push(`padding-left: ${t.att.x}pt;`);
+							}
+						} else {
+							divStyle.push(`padding-left: ${t.att.x}pt;`);
+						}
+					}
 				}
 
 				if (t.name === 't' && t.el !== undefined) {
@@ -102,8 +142,6 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				}
 			});
 		});
-
-		if (rowIndex + 1 > tgroup.att.hdstyle_rows) if (col.att.col === '1') divStyle.push(`max-width: ${maxWidth + 1}pt`);
 	});
 	return `<div style="${divStyle.join(' ')}">${text}</div>`;
 };

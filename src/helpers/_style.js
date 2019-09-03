@@ -54,7 +54,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 	}
 	if (group.att.class === 'sum1') {
 		if (group.el.length > 1)
-			if (group.el[1].att.lindent !== 0) {
+			if (group.el[1].att.lindent !== 0 && group.el[1].att.lindent < 100) {
 				style += `margin-left: ${group.el[1].att.lindent}pt; text-indent: -${group.el[1].att.lindent}pt;`;
 			}
 
@@ -154,7 +154,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	if (t.att.ul1) text = `<u>${text}</u>`;
 
 	if (styles !== '') {
-		styleWrap = `style="font-style: inherit; ${styles}"`;
+		styleWrap = `style="${styles}"`;
 	}
 
 	if (att.fv === '1') {
@@ -164,7 +164,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	} else if (att.fv === '3') {
 		text = `<b><i ${styleWrap}>${text}</i></b>`.trim();
 	} else if (styles !== '') {
-		text = `<var ${styleWrap}>${text}</var>`.trim();
+		text = `<var style="${styles}; font-style: inherit;">${text}</var>`.trim();
 	}
 
 	//Wraps text around page ref link
@@ -176,7 +176,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	const styleClass = col.el[0].att.style;
 	const firstLine = col.el[0].el[0];
-	const isLast = isLastColumn(tgroup, col);
+	const isLast = this.isLastColumn(tgroup, col);
 
 	let rowStyle = [];
 	let rootAtt;
@@ -191,11 +191,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (colspec.att.tbclgut > 0) {
 		//Cell Header rows
 		if (tgroup.att.hdstyle_rows !== '0' && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
-			if (!isLast) {
-				rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${colspec.att.tbclwsp}pt;`);
-			} else {
-				rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp) - 3}pt;`);
-			}
+			rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 
 			if (col.att.namest !== undefined) {
 				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
@@ -204,6 +200,8 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 			} else {
 				if (tgroup.att.cols !== col.att.col) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
 			}
+		} else {
+			// rowStyle.push(`padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 		}
 	}
 
@@ -217,7 +215,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (rootAtt.color !== '#000000') rowStyle.push(`color: ${help.toRGB(rootAtt['color-cmyk'])};`);
 
 	//Cell width/height
-	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
+	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`);
 	if (col.att.col === '1') rowStyle.push(`min-width: ${colspec.att.tbcmeas}pt;`);
 
 	//Last row
@@ -230,12 +228,12 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	}
 
 	//Cell Hrule
-	if (col.att.rule_info === '1 1 0') rowStyle.push(`border-bottom: ${row.att.rthk} solid ${help.toRGB(row.att['rcolor-cmyk'])};`);
+	if (col.att.rule_info === '1 1 0') rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att['rcolor-cmyk'])};`);
 
 	return rowStyle.join(' ');
 };
 
-const isLastColumn = (tgroup, col) => {
+module.exports.isLastColumn = (tgroup, col) => {
 	if (tgroup.att.cols === col.att.col) return true;
 
 	if (!col.att.hasOwnProperty('namest')) return false;
