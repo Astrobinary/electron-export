@@ -132,6 +132,9 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 			if (group.el[lineIndex - 1].att.quadset === 'true') text = `<div style="text-align: ${line.att.qdtype};">${text}</div>`;
 		}
 	}
+	// else {
+	// 	if (line.att.quadset && text.length > 1 && t.att.cgt) text += `</br>`;
+	// }
 
 	if (t.att.hasOwnProperty('ul8')) styles += `text-decoration: line-through;`;
 	if (t.att.hasOwnProperty('ul10')) styles += `border-bottom: 3px double;`;
@@ -164,7 +167,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	} else if (att.fv === '3') {
 		text = `<b><i ${styleWrap}>${text}</i></b>`.trim();
 	} else if (styles !== '') {
-		text = `<var style="${styles}; font-style: inherit;">${text}</var>`.trim();
+		text = `<var style="${styles} font-style: inherit;">${text}</var>`.trim();
 	}
 
 	//Wraps text around page ref link
@@ -191,7 +194,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (colspec.att.tbclgut > 0) {
 		//Cell Header rows
 		if (tgroup.att.hdstyle_rows !== '0' && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
-			rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
+			if (tgroup.att.tgroupstyle === 'fintab') rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 
 			if (col.att.namest !== undefined) {
 				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
@@ -200,9 +203,13 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 			} else {
 				if (tgroup.att.cols !== col.att.col) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
 			}
-		} else {
-			// rowStyle.push(`padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 		}
+	}
+
+	if (isLast && tgroup.att.tgroupstyle === 'fintab' && this.hasCalrHang(col)) {
+		rowStyle.push(`padding-right: 2ch;`);
+	} else if (isLast && tgroup.att.tgroupstyle === 'fintab') {
+		rowStyle.push(`padding-right: 0.5ch;`);
 	}
 
 	//Cell text size
@@ -210,9 +217,6 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 
 	//Cell line height
 	rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
-
-	//Cell text color
-	if (rootAtt.color !== '#000000') rowStyle.push(`color: ${help.toRGB(rootAtt['color-cmyk'])};`);
 
 	//Cell width/height
 	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`);
@@ -243,8 +247,28 @@ module.exports.isLastColumn = (tgroup, col) => {
 	return false;
 };
 
+module.exports.hasCalrHang = col => {
+	col.el.forEach((group, groupIndex) => {
+		group.el.forEach((line, lineIndex) => {
+			line.el.forEach((t, tIndex) => {
+				if (t.name === 't' && t.el !== undefined) {
+					t.el.forEach((el, elIndex) => {
+						if (el.type === 'instruction') {
+							if (el.ins === 'cal;rhang') return true;
+						}
+					});
+				}
+			});
+		});
+	});
+
+	return false;
+};
+
 module.exports.handleInstructions = el => {
 	if (el.ins === 'qa') return `<br/>`;
+	if (el.ins === 'l') return `<br/>`;
+
 	if (el.ins.includes('link;')) return `<a href="${el.ins.slice(5)}">`;
 	if (el.ins === '/link') return `</a>`;
 	if (el.ins === 'sup') return `<sup style="line-height: 0;">`;

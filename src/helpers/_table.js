@@ -60,26 +60,26 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				} else if (isNumber && line.att.first && line.att.last && line.att.qdtype === 'center') {
 					divStyle.push(`width: ${line.att.lnwidth}pt;`);
 				} else {
-					if (isNumber) divStyle.push(`width: ${line.att.lnwidth}pt;`);
+					if (isNumber && isLast) divStyle.push(`max-width: ${line.att.lnwidth}pt;`);
 				}
 
-				if (leftSpace !== 0 && isNumber && line.att.last) {
-					if (leftSpace > parseInt(colspec.att.tbclwsp) / 2) {
-						divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
-						if (!isLast) {
-							divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
+				if (line.att.qdtype !== 'center' && line.att.last) {
+					if (leftSpace !== 0 && isNumber) {
+						if (leftSpace > parseInt(colspec.att.tbclwsp) / 2) {
+							divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
+							if (!isLast) {
+								divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
+							}
 						} else {
-							divStyle.push(`margin-right: ${parseInt(colspec.att.tbclwsp)}pt;`);
+							divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
+							if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						}
 					} else {
-						divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
-						if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
-					}
-				} else {
-					if (!isNumber && !isLast && line.att.last) {
-						divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
-					} else {
-						if (line.att.last) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+						if (!isNumber && !isLast) {
+							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+						} else {
+							divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+						}
 					}
 				}
 			} else {
@@ -93,7 +93,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				} else {
 					if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
-						divStyle.push(`width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
+						divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
 					} else if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length < 1) {
 						if (tIndex > 1) {
 							if (line.el[tIndex - 1].name === 'shape') {
@@ -123,7 +123,11 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 								} else {
 									el.txt = el.txt.trim();
 								}
+							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt)) || /\s—/.test(el.txt)) {
+								el.txt = el.txt.replace(/ +?/g, '');
 							}
+
+							if (isNumber && el.txt.includes('%')) divStyle.push(`margin-right: 3ch;`);
 
 							//Adds USB
 							if (elIndex > 1) {
