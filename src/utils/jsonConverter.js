@@ -21,10 +21,6 @@ const generateJSON = () => {
 		attributesKey: "att",
 		textKey: "txt",
 		instructionKey: "ins"
-		// attributesFn: val => {
-		// 	// if (val["trace"] === "delete") return undefined; //Removes deleted traces attributes
-		// 	return val;
-		// }
 	};
 
 	let results = convert.xml2json(xml, options);
