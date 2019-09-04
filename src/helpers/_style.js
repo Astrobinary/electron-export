@@ -131,10 +131,9 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 		if (/\S/.test(text)) {
 			if (group.el[lineIndex - 1].att.quadset === 'true') text = `<div style="text-align: ${line.att.qdtype};">${text}</div>`;
 		}
+	} else {
+		if (line.att.quadset && text.length > 1 && t.att.cgt) text += `</br>`;
 	}
-	// else {
-	// 	if (line.att.quadset && text.length > 1 && t.att.cgt) text += `</br>`;
-	// }
 
 	if (t.att.hasOwnProperty('ul8')) styles += `text-decoration: line-through;`;
 	if (t.att.hasOwnProperty('ul10')) styles += `border-bottom: 3px double;`;
@@ -250,6 +249,7 @@ module.exports.isLastColumn = (tgroup, col) => {
 module.exports.hasCalrHang = col => {
 	col.el.forEach((group, groupIndex) => {
 		group.el.forEach((line, lineIndex) => {
+			if (line.el.ins === 'cal;rhang') return true;
 			line.el.forEach((t, tIndex) => {
 				if (t.name === 't' && t.el !== undefined) {
 					t.el.forEach((el, elIndex) => {

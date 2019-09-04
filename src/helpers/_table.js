@@ -127,7 +127,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 								el.txt = el.txt.replace(/ +?/g, '');
 							}
 
-							if (isNumber && el.txt.includes('%')) divStyle.push(`margin-right: 3ch;`);
+							if (isNumber && el.txt.includes('%')) divStyle.push(`margin-right: 2.5ch;`);
 
 							//Adds USB
 							if (elIndex > 1) {

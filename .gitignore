@@ -15,7 +15,6 @@
 # development
 /samples
 /output
-output/index.html
 
 # misc
 .DS_Store
