@@ -1,15 +1,9 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
-const fs = require("fs");
+const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
 const path = require("path");
 const isDev = require("electron-is-dev");
-const Handlebars = require("handlebars");
-const pretty = require("pretty");
-require("../src/helpers");
+const { spawn } = require("child_process");
 
-const samplePath = "C:\\Users\\padillab\\Documents\\Development\\electron-export\\samples\\";
-
-//Temp dev enviroments
-const data = JSON.parse(fs.readFileSync(`${samplePath}\\json_test.json`, "utf8"));
+const js = require(path.join(__dirname, "../src/utils/jsonConverter.js"));
 
 let mainWindow;
 
@@ -18,6 +12,7 @@ const createWindow = () => {
 		width: 500,
 		height: 600,
 		frame: false,
+		resizable: false,
 		webPreferences: {
 			nodeIntegration: true
 		}
@@ -27,42 +22,48 @@ const createWindow = () => {
 
 	if (isDev) {
 		mainWindow.webContents.openDevTools();
+	} else {
+		globalShortcut.register("Control+`", () => {
+			mainWindow.webContents.openDevTools({ mode: "detach" });
+		});
 	}
 
+	getJobLocation();
+
 	mainWindow.on("closed", () => (mainWindow = null));
+};
+
+const getJobLocation = () => {
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nt10003590x3_s3a-FILED" : process.argv[1];
+
+	let path = arg1.split("/");
+	path = path.slice(4, path.length);
+
+	global.jobNumber = path[path.length - 1].slice(4);
+	path = path.join("\\");
+	global.jobLocation = "N:\\" + path;
 };
 
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
-	if (process.platform !== "darwin") {
-		app.quit();
-	}
+	if (process.platform !== "darwin") app.quit();
 });
 
 app.on("activate", () => {
-	if (mainWindow === null) {
-		createWindow();
-	}
+	if (mainWindow === null) createWindow();
 });
 
-ipcMain.on("compose-handlebars", (_event, json) => {
-	//Temp dev enviroments
-	const source = fs.readFileSync("./src/template.handlebars", "utf8").toString();
-	const template = Handlebars.compile(source);
-	const output = template(data);
+ipcMain.on("getXML", e => {
+	let cmd = spawn("divxml -job -nol -ncrd -wpi -xsh", [], { shell: true, cwd: global.jobLocation });
 
-	const stream = fs.createWriteStream("./output/index.html");
-	stream.once("open", () => {
-		const html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
-		stream.end(
-			pretty(html, {
-				ocd: true
-			})
-		);
+	cmd.stdout.on("data", data => {
+		e.sender.send("debug", `${data}`);
 	});
 
-	stream.on("end", () => {
-		mainWindow.minimize();
+	cmd.on("close", code => {
+		if (code === 0) {
+			e.sender.send("complie", js.generateJSON(global.jobLocation));
+		}
 	});
 });

@@ -125,18 +125,19 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 		styles += `font-size: ${att.size}pt;`;
 	}
 
-	//If broken with a <qa> and alignment is different has to be last T in an line element
+	//If broken with a <qa> and alignment is different; has to be last T in an line element
 	if (group.el[0].att.qdtype !== line.att.qdtype && line.att.quadset && line.el.length - 1 === tIndex && text.length > 1 && line.att.qdtype !== "forcej") {
 		if (/\S/.test(text)) if (group.el[lineIndex - 1].att.quadset === "true") text = `<div style="text-align: ${line.att.qdtype};">${text}</div>`;
-	} else {
-		if (line.att.quadset && text.length > 1 && t.att.cgt) text += `</br>`;
+	} else if (line.att.quadset && text.length > 1 && t.att.cgt) {
+		text += `</br>`;
 	}
 
+	//Handles strikes and double underlines
 	if (t.att.hasOwnProperty("ul8")) styles += `text-decoration: line-through;`;
 	if (t.att.hasOwnProperty("ul10")) styles += `border-bottom: 3px double;`;
 	if (t.att.hasOwnProperty("ul8") && t.att.hasOwnProperty("ul10")) style += `text-decoration: line-through; border-bottom: 3px double;`;
 
-	// Handles Y value
+	//Handles Y value
 	if (t.att.y > 0) styles += `transform: translateY(${t.att.y}pt); display: inline-block;`;
 
 	//Handles CM casing

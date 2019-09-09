@@ -1,32 +1,89 @@
 import React, { useState, useEffect } from "react";
-
 import ReactDOM from "react-dom";
-import "./global.scss";
-
-import jsonConvert from "./utils/jsonConverter";
+import { ipcRenderer as ipc, remote } from "electron";
+import Handlebars from "handlebars";
+import fs from "fs";
+import pretty from "pretty";
+import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
 
-const { ipcRenderer } = require("electron");
+import "./helpers";
+import "./global.scss";
 
 const Renderer = () => {
-	const [json, setJson] = useState(null);
-
-	const renderHandlebars = () => {
-		console.log("composing template...");
-		ipcRenderer.send("compose-handlebars", json);
-	};
+	// const [json, setJson] = useState(null);
 
 	useEffect(() => {
-		renderHandlebars();
+		ipc.on("debug", (e, msg) => {
+			console.log(msg);
+		});
+
+		ipc.on("complie", (e, json) => {
+			const output = template(JSON.parse(json, "utf8"));
+			const dir = `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test`;
+
+			if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+
+			let stream;
+			if (isDev) {
+				stream = fs.createWriteStream("./output/index.htm");
+			} else {
+				stream = fs.createWriteStream(`N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test\\index.htm`);
+			}
+
+			stream.on("end", () => {
+				e.sender.send("debug", `HTML FILE GENERATED`);
+			});
+
+			stream.once("open", () => {
+				const html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
+				stream.end(
+					pretty(html, {
+						ocd: true
+					})
+				);
+			});
+		});
 	});
 
 	return (
 		<React.Fragment>
 			<Titlebar />
-			<button onClick={() => setJson(jsonConvert())}>Create Json test file</button>
-			<button onClick={() => renderHandlebars()}>Handlebars template</button>
+			<button onClick={() => ipc.send("getXML")}>Start</button>
 		</React.Fragment>
 	);
 };
+
+const template = Handlebars.compile(`
+{{#each this.el}} {{!-- Document Root, filter only elements --}}
+{{#each this.el}} {{!-- Each element in document (Pages/Styles) --}}
+   {{#filter_scope this "pages"}} {{!-- Pages element only --}}
+	
+		{{#each this.el}}
+			<div class="page" style="width: {{this.el.[0].el.[0].att.bsx}}pt; text-align: left; margin: auto; position: relative;">
+				{{#gather_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
+					{{#each this}} {{!-- Each block --}}
+
+						{{#create_blocks ../this this @index}} {{!-- Generates block elements --}}
+
+							{{#each this.el}} {{!-- Each group --}}
+								
+								{{~#create_tags @root.el.0.el.1.el ../this this @index ~}}
+									{{~ display_text @root.el.0.el.1.el ../../this ../this ~}}
+								{{/create_tags}}
+
+							{{/each}}
+
+						{{/create_blocks}}
+
+					{{/each}}
+				{{/gather_blocks}}
+			</div>
+			<hr style="page-break-after: always; width: 612pt; margin-top: 20pt; margin-bottom: 20pt; border: 0px; height: 3px; background-color: black" />
+		{{/each}}
+
+	{{/filter_scope}}{{!-- Pages element only --}}
+{{/each}}{{!-- Each element in document (Pages/Styles) --}}
+{{/each}}{{!-- Document Root, filter only elements --}}`);
 
 ReactDOM.render(<Renderer />, document.getElementById("root"));

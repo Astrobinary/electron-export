@@ -18,9 +18,14 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 
 #### Text
 - Continued header not properly breaking between lines. Something to do with CGT and empty lines (Wabtec F-22)
-- Normalize checkboxes
+- Footer not centered (Wabtec F-38)
+- Normalize checkbox sizes
 
 #### Tables
+- Continued headers breaking issues
+- Headers last column does not need ch spacing
+- Text indent folio 3 (nc10000790x1_def14a-FILED)
+- Table width
 - Take into account shapes (shading) that display negative att.x values.
 - Handle EDGAR shading exceptions.
 - Handle rule exceptions.
@@ -29,10 +34,12 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 #### Images
 - Export images based on job overview.
 
+#### House Only
+- Special regcov rules to ignore vertical spacing.
+- Hanging characters on tables. (Noticeable with EDGAR shading)
+
 #### Other
 - Properly handle red herring.
-- Special regcov rules to ignore vertical spacing.
-- Special house only rules based on job location.
 
 ***
 

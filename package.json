@@ -13,7 +13,8 @@
 		"copyright": "Copyright © 2019 ${author}",
 		"files": [
 			"build/**/*",
-			"node_modules/**/*"
+			"node_modules/**/*",
+			"srcs/helpers/**"
 		],
 		"directories": {
 			"buildResources": "assets"
@@ -34,7 +35,7 @@
 	"homepage": "./",
 	"main": "public/electron.js",
 	"scripts": {
-		"dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://localhost:3000 && nodemon --watch ./src/helpers/* --watch ./src/template.handlebars --exec electron . \"",
+		"dev": "concurrently \"cross-env BROWSER=none yarn start\" \"wait-on http://localhost:3000 && nodemon --watch ./src/* --watch ./public/electron.js --exec electron . \"",
 		"start": "rescripts start",
 		"build": "rescripts build",
 		"postinstall": "electron-builder install-app-deps",
