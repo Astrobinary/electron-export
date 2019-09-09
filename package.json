@@ -13,8 +13,7 @@
 		"copyright": "Copyright © 2019 ${author}",
 		"files": [
 			"build/**/*",
-			"node_modules/**/*",
-			"srcs/helpers/**"
+			"node_modules/**/*"
 		],
 		"directories": {
 			"buildResources": "assets"
@@ -29,6 +28,7 @@
 		"pretty": "^2.0.0",
 		"react": "^16.8.6",
 		"react-dom": "^16.8.6",
+		"react-icons": "^3.7.0",
 		"react-scripts": "3.0.1",
 		"xml-js": "^1.6.11"
 	},

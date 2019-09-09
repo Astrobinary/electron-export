@@ -3,16 +3,14 @@ const path = require("path");
 const isDev = require("electron-is-dev");
 const { spawn } = require("child_process");
 
-const js = require(path.join(__dirname, "../src/utils/jsonConverter.js"));
-
 let mainWindow;
 
 const createWindow = () => {
 	mainWindow = new BrowserWindow({
-		width: 500,
-		height: 600,
+		width: 600,
+		height: 700,
 		frame: false,
-		resizable: false,
+		// resizable: false,
 		webPreferences: {
 			nodeIntegration: true
 		}
@@ -55,7 +53,7 @@ app.on("activate", () => {
 });
 
 ipcMain.on("getXML", e => {
-	let cmd = spawn("divxml -job -nol -ncrd -wpi -xsh", [], { shell: true, cwd: global.jobLocation });
+	let cmd = spawn("divxml -job -ncrd -wpi", [], { shell: true, cwd: global.jobLocation });
 
 	cmd.stdout.on("data", data => {
 		e.sender.send("debug", `${data}`);
@@ -63,7 +61,7 @@ ipcMain.on("getXML", e => {
 
 	cmd.on("close", code => {
 		if (code === 0) {
-			e.sender.send("complie", js.generateJSON(global.jobLocation));
+			e.sender.send("complie");
 		}
 	});
 });

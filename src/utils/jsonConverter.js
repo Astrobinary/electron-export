@@ -1,8 +1,8 @@
-const fs = require("fs");
-const convert = require("xml-js");
-const isDev = require("electron-is-dev");
+import isDev from "electron-is-dev";
+import fs from "fs";
+import convert from "xml-js";
 
-module.exports.generateJSON = path => {
+const generateJSON = path => {
 	const rawXML = fs.readFileSync(`${path}\\tout.xml`, "utf8");
 	const removeFrame = /<block type="frame"([\s\S]*?)<\/block>/gm;
 	const xml = rawXML.replace(removeFrame, ""); //Removes XPP banner from XML
@@ -34,3 +34,4 @@ module.exports.generateJSON = path => {
 
 	return results;
 };
+export default generateJSON;

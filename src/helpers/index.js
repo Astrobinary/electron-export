@@ -1,20 +1,20 @@
-const Handlebars = require('handlebars');
+const Handlebars = require("handlebars");
 
 //Gathers all custom helpers for handlebars
-exports.gather_blocks = require('./gather_blocks');
-exports.create_blocks = require('./create_blocks');
-exports.create_tags = require('./create_tags');
-exports.display_text = require('./display_text');
+exports.gather_blocks = require("./gather_blocks");
+exports.create_blocks = require("./create_blocks");
+exports.create_tags = require("./create_tags");
+exports.display_text = require("./display_text");
 
 //Outputs current context
-Handlebars.registerHelper('debug', context => {
-	console.log('========START========');
+Handlebars.registerHelper("debug", context => {
+	console.log("========START========");
 	console.log(context);
-	console.log('---------END---------');
+	console.log("---------END---------");
 });
 
 //Filters json data based on name
-Handlebars.registerHelper('filter_scope', (context, name, options) => {
+Handlebars.registerHelper("filter_scope", (context, name, options) => {
 	if (context.name === name) {
 		return options.fn(context);
 	} else {
@@ -33,7 +33,7 @@ exports.onlyType = (arr, type) => {
 
 //Checks t if contains hang
 exports.hasHang = lines => {
-	if (lines[0].att.last === 'true') return;
+	if (lines[0].att.last === "true") return;
 
 	if (lines.length > 1) {
 		if (lines[0].att.yfinal === lines[1].att.yfinal) {
@@ -46,7 +46,7 @@ exports.hasHang = lines => {
 
 exports.toRGB = cmyk => {
 	if (cmyk === undefined) return;
-	const CMYK = cmyk.split(' ');
+	const CMYK = cmyk.split(" ");
 	let result = [];
 
 	const c = CMYK[0];

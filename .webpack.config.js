@@ -13,7 +13,5 @@ module.exports = config => {
 		]
 	});
 
-	console.log(__dirname + "/src/helpers");
-
 	return config;
 };

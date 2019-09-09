@@ -1,0 +1,92 @@
+.Buttonbar {
+	display: flex;
+	background-color: white;
+	border-bottom: 1px solid #141e30;
+	width: 100%;
+	height: 75px;
+	line-height: 20px;
+	color: #404040;
+	flex-direction: row;
+	justify-content: space-between;
+	z-index: 100;
+	user-select: none;
+	position: absolute;
+	bottom: 0;
+	font-size: 14px;
+	font-weight: 400;
+	box-shadow: 0px -5px 20px -10px rgba(0, 0, 0, 0.3);
+}
+
+.btn-contain {
+	opacity: 0.2;
+	padding-left: 20px;
+	padding-right: 20px;
+	padding-top: 13px;
+	cursor: pointer;
+	text-align: center;
+	transition: all 0.2s ease-in-out;
+	&:hover {
+		background-color: whitesmoke;
+		opacity: 0.6;
+	}
+}
+
+.icon {
+	padding: 0px 2px;
+	text-align: center;
+	svg {
+		width: 30px;
+		height: 25px;
+		fill: #4e4378;
+	}
+}
+
+.giant {
+	font-size: 34px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	font-weight: bold;
+	color: #4e4378;
+}
+
+.larger {
+	margin-bottom: -5px;
+	svg {
+		width: 35px;
+		height: 30px;
+	}
+}
+
+.sepR {
+	border-right: 2px solid #e8e8e8;
+}
+
+.sepL {
+	border-left: 2px solid #e8e8e8;
+}
+
+.double {
+	svg {
+		fill: #2b5876;
+	}
+	flex-grow: 2;
+}
+
+.slight {
+	opacity: 0.8;
+	svg {
+		fill: #777777;
+	}
+	&:hover {
+		background-color: whitesmoke;
+		opacity: 1;
+	}
+}
+
+.selected {
+	opacity: 1;
+	&:hover {
+		background-color: whitesmoke;
+		opacity: 1;
+	}
+}

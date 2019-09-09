@@ -6,6 +6,10 @@ import fs from "fs";
 import pretty from "pretty";
 import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
+import Statusbar from "./components/Statusbar/statusbar";
+import Buttonbar from "./components/Buttonbar/buttonbar";
+
+import generateJSON from "../src/utils/jsonConverter";
 
 import "./helpers";
 import "./global.scss";
@@ -18,8 +22,9 @@ const Renderer = () => {
 			console.log(msg);
 		});
 
-		ipc.on("complie", (e, json) => {
-			const output = template(JSON.parse(json, "utf8"));
+		ipc.on("complie", e => {
+			const json = generateJSON(remote.getGlobal("jobLocation"));
+			const output = template(JSON.parse(json), "utf8");
 			const dir = `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test`;
 
 			if (!fs.existsSync(dir)) fs.mkdirSync(dir);
@@ -49,7 +54,8 @@ const Renderer = () => {
 	return (
 		<React.Fragment>
 			<Titlebar />
-			<button onClick={() => ipc.send("getXML")}>Start</button>
+			<Buttonbar />
+			<Statusbar />
 		</React.Fragment>
 	);
 };
