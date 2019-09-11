@@ -61,9 +61,7 @@ const Renderer = () => {
 				shell.showItemInFolder(path.current);
 			} else {
 				e.sender.send("debugRelay", `HTML files created`);
-				if (isDev) {
-					shell.openItem("C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\index.htm");
-				} else {
+				if (!isDev) {
 					shell.showItemInFolder(`N:\\HTML\\Out\\${remote.getGlobal("jobNumber")}\\`);
 				}
 			}

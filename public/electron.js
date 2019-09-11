@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const isDev = require("electron-is-dev");
 const storage = require("electron-json-storage");
 const { spawn } = require("child_process");
@@ -53,7 +54,7 @@ const createWindow = () => {
 };
 
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nc10000863x1_10k" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nc10002459x1_10k" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);
@@ -83,6 +84,12 @@ app.on("activate", () => {
 });
 
 ipcMain.on("getXML", e => {
+	if(isDev && fs.existsSync(`${global.jobLocation}\\tout.xml`)){
+		console.log("XML Already generated.");
+		e.sender.send("complie");
+		return;
+	}
+
 	let cmd = spawn("divxml -job -ncrd -wpi -xsh", [], { shell: true, cwd: global.jobLocation });
 
 	cmd.stdout.on("data", data => {
@@ -91,7 +98,7 @@ ipcMain.on("getXML", e => {
 
 	cmd.on("close", code => {
 		if (code === 0) {
-			e.sender.send("complie", "Creating html file now...");
+			e.sender.send("complie");
 		}
 	});
 });

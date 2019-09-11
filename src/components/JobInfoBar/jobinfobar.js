@@ -1,10 +1,16 @@
 import React from "react";
-import "./jobinfobar.scss";
 import { remote, shell } from "electron";
+import isDev from "electron-is-dev";
 import { MdFolderOpen } from "react-icons/md";
-import { GiProcessor } from "react-icons/gi";
+import { GiProcessor, GiLightThornyTriskelion } from "react-icons/gi";
+import "./jobinfobar.scss";
 
 const JobInfoBar = () => {
+
+	const openSFPFolder = () => {
+		shell.openItem(remote.getGlobal("jobLocation"));
+	};
+
 	const openJobFolder = () => {
 		shell.openItem(remote.getGlobal("jobFolderLocation"));
 	};
@@ -15,6 +21,13 @@ const JobInfoBar = () => {
 	return (
 		<div className="JobInfoBar">
 			<div className="jobNumber">{remote.getGlobal("jobNumber")}</div>
+
+			{isDev ?<div className="btn-contain job sep" onClick={() => openSFPFolder()}>
+				<div className="icon">
+					<GiLightThornyTriskelion />
+				</div>
+				open SFP 
+			</div> : null}
 
 			<div className="btn-contain job sepL" onClick={() => openJobFolder()}>
 				<div className="icon">

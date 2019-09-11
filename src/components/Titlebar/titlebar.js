@@ -1,8 +1,8 @@
 import React from "react";
 import { remote } from "electron";
 import isDev from "electron-is-dev";
-import "./titlebar.scss";
 import { FaWindowClose } from "react-icons/fa";
+import "./titlebar.scss";
 
 const closeWindow = () => {
 	remote.BrowserWindow.getFocusedWindow().close();

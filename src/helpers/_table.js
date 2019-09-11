@@ -13,7 +13,7 @@ module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex
 	let rowspan = "";
 	if (col.att.morerows !== undefined) colspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 
-	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
+	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="bottom" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
 };
 
 const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
@@ -42,9 +42,12 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 			if (line.el === undefined) return;
 
 			//Basic rules TODO: implement width/color
-			if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: 1pt solid;`); //urule
-			if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: 1pt solid;`); //trule
-			if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double;`); // double trule
+			if(line.att.last){
+				if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: 1pt solid;`); //urule
+				if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: 1pt solid;`); //trule
+				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double;`); // double trule
+			}
+			
 
 			//Gets max width per each line
 			let currentWidth = 0;
@@ -157,32 +160,32 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 	return `<div style="${divStyle.join(" ")}">${text}</div>`;
 };
 
-const checkChgrow = row => {
-	let rulestats = { xvrule: 0, xrule: 0, rule: 0 };
+// const checkChgrow = row => {
+// 	let rulestats = { xvrule: 0, xrule: 0, rule: 0 };
 
-	row.el.forEach(entry => {
-		entry.el.forEach(group => {
-			group.el.forEach(line => {
-				if (line.hasOwnProperty("el"))
-					line.el.forEach(t => {
-						if (t.ins === undefined) return;
-						let ins = t.ins;
+// 	row.el.forEach(entry => {
+// 		entry.el.forEach(group => {
+// 			group.el.forEach(line => {
+// 				if (line.hasOwnProperty("el"))
+// 					line.el.forEach(t => {
+// 						if (t.ins === undefined) return;
+// 						let ins = t.ins;
 
-						if (ins === "chgrow;xvrule") {
-							rulestats.xvrule = parseInt(entry.att.col);
-						}
+// 						if (ins === "chgrow;xvrule") {
+// 							rulestats.xvrule = parseInt(entry.att.col);
+// 						}
 
-						if (ins.includes("chgrow;xrule")) {
-							rulestats.xrule = parseInt(entry.att.col);
-						}
+// 						if (ins.includes("chgrow;xrule")) {
+// 							rulestats.xrule = parseInt(entry.att.col);
+// 						}
 
-						if (ins.includes("chgrow;trule")) {
-							rulestats.rule = parseInt(entry.att.col);
-						}
-					});
-			});
-		});
-	});
+// 						if (ins.includes("chgrow;trule")) {
+// 							rulestats.rule = parseInt(entry.att.col);
+// 						}
+// 					});
+// 			});
+// 		});
+// 	});
 
-	return rulestats;
-};
+// 	return rulestats;
+// };

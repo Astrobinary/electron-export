@@ -157,6 +157,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 
 	//Handles bullets
 	if (text === "󰄝") text = `<font style=" font-size: 16pt; line-height: 12pt;">&#8226;</font>`; //Bullet to html??
+	if (text === "□") text = `&#9744;`; //ebox to html??
 
 	//Handles underlines
 	if (t.att.ul1) text = `<u>${text}</u>`;
@@ -214,7 +215,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (isLast && tgroup.att.tgroupstyle === "fintab" && this.hasCalHang(col)) {
 		rowStyle.push(`padding-right: 2ch;`);
 	} else if (isLast && tgroup.att.tgroupstyle === "fintab") {
-		rowStyle.push(`padding-right: 0.5ch;`);
+		// rowStyle.push(`padding-right: 0.5ch;`);
 	}
 
 	//Cell text size
@@ -253,6 +254,7 @@ module.exports.isLastColumn = (tgroup, col) => {
 module.exports.hasCalHang = col => {
 	col.el.forEach((group, groupIndex) => {
 		group.el.forEach((line, lineIndex) => {
+			if (line.el === undefined) return;
 			if (line.el.ins === "cal;rhang") return true;
 			line.el.forEach((t, tIndex) => {
 				if (t.name === "t" && t.el !== undefined) {

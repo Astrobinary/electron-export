@@ -10,22 +10,21 @@ Buttons: Start/Stop, validate links/images
 On start: Run command to generate XML from XPP project then pass it to JSON transformer to save in global state. Handlebar reads from state and copies locally to modify and properly template html.
 
 ### XPP XML command:
-`divxml -job -nol -ncrd -wpi -xsh`
+`divxml -job -nol –ncrh -wpi -xsh`
 
 ***
 
 ## HTML TODO:
-- JOB_nt10003828x1_s4-FILED error
 
 #### Text
 - Continued header not properly breaking between lines. Something to do with CGT and empty lines (Wabtec F-22)
 - Footer not centered (Wabtec F-38)
 - Normalize checkbox sizes
+- Calculate block distances
 
 #### Tables
 - Continued headers breaking issues
 - Headers last column does not need ch spacing
-- Text indent folio 3 (nc10000790x1_def14a-FILED)
 - Handle box all
 - Set row to max-height 
 - Table width

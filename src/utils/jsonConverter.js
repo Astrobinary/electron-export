@@ -1,5 +1,4 @@
 import isDev from "electron-is-dev";
-
 import fs from "fs";
 import convert from "xml-js";
 

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ipcRenderer as ipc, remote } from "electron";
 import { FaFillDrip, FaPlay, FaPager, FaRegSave, FaRadiation } from "react-icons/fa";
 import "./buttonbar.scss";
-import storage from "electron-json-storage";
 
 const Buttonbar = () => {
 	const [config, setConfig] = useState({

@@ -1,10 +1,9 @@
-const help = require("./index");
 const Handlebars = require("handlebars");
+const { remote } = require("electron");
+const help = require("./index");
 const style = require("./_style");
 const table = require("./_table");
-const cmd = require("node-cmd");
-
-const { remote } = require("electron");
+// const cmd = require("node-cmd");
 
 Handlebars.registerHelper("display_text", (rootStyle, block, group) => {
 	let text = "";
