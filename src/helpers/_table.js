@@ -30,7 +30,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 		let maxWidth = 0;
 
 		//Handles indent
-		if (group.el[0].att.lindent > 0) divStyle.push(`margin-left: ${group.el[0].att.lindent}pt;`);
+		if (group.el[0].att.lindent > 0) divStyle.push(`padding-left: ${group.el[0].att.lindent}pt;`);
 
 		//Handles 2nd line indent
 		if (group.el.length > 1)
@@ -42,12 +42,11 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 			if (line.el === undefined) return;
 
 			//Basic rules TODO: implement width/color
-			if(line.att.last){
+			if (line.att.last) {
 				if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: 1pt solid;`); //urule
 				if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: 1pt solid;`); //trule
 				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double;`); // double trule
 			}
-			
 
 			//Gets max width per each line
 			let currentWidth = 0;
@@ -79,15 +78,20 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							}
 						} else {
 							divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
+
 							if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						}
 					} else {
 						if (!isNumber && !isLast) {
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						} else {
-							divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+							if (Math.abs(parseFloat(colspec.att.colwidth) - parseFloat(colspec.att.tbclwsp) - parseFloat(line.att.lnwidth)) > 0.2) {
+								divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+							}
 						}
 					}
+				} else {
+					divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 				}
 			} else {
 				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`); //Apply style to header column 1
@@ -103,11 +107,8 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 						divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
 					} else if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length < 1) {
 						if (tIndex > 1) {
-							if (line.el[tIndex - 1].name === "shape") {
-								divStyle.push(`padding-left: ${parseFloat(t.att.x) - Math.abs(line.el[tIndex - 1].att.x)}pt;`);
-							} else {
-								divStyle.push(`padding-left: ${t.att.x}pt;`);
-							}
+							const offSet = tXpos(line, t, tIndex);
+							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
 						} else {
 							divStyle.push(`padding-left: ${t.att.x}pt;`);
 						}
@@ -158,6 +159,20 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 		});
 	});
 	return `<div style="${divStyle.join(" ")}">${text}</div>`;
+};
+
+const tXpos = (line, t, tIndex) => {
+	if (line.el === undefined) return;
+
+	let total = 0;
+
+	for (var i = tIndex; i >= 0; i--) {
+		if (line.el[i].hasOwnProperty("att")) {
+			total += parseFloat(line.el[i].att.x);
+		}
+	}
+
+	return total;
 };
 
 // const checkChgrow = row => {

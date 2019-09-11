@@ -28,7 +28,7 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 - Handle box all
 - Set row to max-height 
 - Table width
-- Take into account shapes (shading) that display negative att.x values.
+- Handle hstyle center
 - Handle EDGAR shading exceptions.
 - Handle rule exceptions.
 - Generate vertical rules.
