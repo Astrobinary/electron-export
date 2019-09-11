@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
-import { ipcRenderer as ipc, remote } from "electron";
+import { ipcRenderer as ipc, remote, shell } from "electron";
 import Handlebars from "handlebars";
 import fs from "fs";
 import pretty from "pretty";
@@ -29,13 +29,12 @@ const Renderer = () => {
 		ipc.on("complie", e => {
 			const json = generateJSON(remote.getGlobal("jobLocation"));
 			const output = template(JSON.parse(json), "utf8");
-			const dir = `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test`;
+			const dir = `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")}`;
 
 			let stream;
 
 			if (isDev) {
 				if (path.current === undefined) {
-					console.log("here");
 					stream = fs.createWriteStream(`./output/index.htm`);
 				} else {
 					stream = fs.createWriteStream(path.current);
@@ -43,7 +42,7 @@ const Renderer = () => {
 			} else {
 				if (path.current === undefined) {
 					if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-					stream = fs.createWriteStream(`N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test\\${remote.getGlobal("jobNumber")}.htm`);
+					stream = fs.createWriteStream(`N:\\HTML\\Out\\${remote.getGlobal("jobNumber")}\\${remote.getGlobal("jobNumber")}.htm`);
 				} else {
 					stream = fs.createWriteStream(path.current);
 				}
@@ -59,8 +58,14 @@ const Renderer = () => {
 
 			if (path.current !== undefined) {
 				e.sender.send("debugRelay", `HTML created at: ${path.current}`);
+				shell.showItemInFolder(path.current);
 			} else {
 				e.sender.send("debugRelay", `HTML files created`);
+				if (isDev) {
+					shell.openItem("C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\index.htm");
+				} else {
+					shell.showItemInFolder(`N:\\HTML\\Out\\${remote.getGlobal("jobNumber")}\\`);
+				}
 			}
 		});
 	});

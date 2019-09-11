@@ -4,7 +4,6 @@ import "./debugwindow.scss";
 
 const DebugWindow = () => {
 	const [debug, setDebug] = useState([]);
-
 	const messagesEnd = useRef(null);
 
 	useEffect(() => {

@@ -4,6 +4,8 @@ const style = require("./_style");
 const table = require("./_table");
 const cmd = require("node-cmd");
 
+const { remote } = require("electron");
+
 Handlebars.registerHelper("display_text", (rootStyle, block, group) => {
 	let text = "";
 
@@ -94,12 +96,14 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 		});
 
 		if (rowIndex + 1 > tgroup.att.hdstyle_rows && tgroup.att.tgroupstyle === "fintab") {
-			if (tgroup.att.stubcols) {
+			if (tgroup.att.stubcols && remote.getGlobal("edgarShade")) {
 				if (row.att.row % 2 === 0) {
 					text += `<tr row="${row.att.rowrel}">${td}</tr>`;
 				} else {
 					text += `<tr row="${row.att.rowrel}" style="background-color: #cceeff;">${td}</tr>`;
 				}
+			} else {
+				text += `<tr row="${row.att.rowrel}">${td}</tr>`;
 			}
 		} else {
 			text += `<tr row="${row.att.rowrel}">${td}</tr>`;

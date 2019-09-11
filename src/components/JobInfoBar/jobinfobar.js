@@ -1,12 +1,16 @@
 import React from "react";
 import "./jobinfobar.scss";
-import { remote } from "electron";
+import { remote, shell } from "electron";
 import { MdFolderOpen } from "react-icons/md";
 import { GiProcessor } from "react-icons/gi";
 
 const JobInfoBar = () => {
-	const openJobFolder = () => {};
-	const openConfigFile = () => {};
+	const openJobFolder = () => {
+		shell.openItem(remote.getGlobal("jobFolderLocation"));
+	};
+	const openConfigFile = () => {
+		shell.openItem(remote.getGlobal("jobFolderLocation") + "/config.json");
+	};
 
 	return (
 		<div className="JobInfoBar">
