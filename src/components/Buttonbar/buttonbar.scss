@@ -25,19 +25,22 @@
 	cursor: pointer;
 	text-align: center;
 	transition: all 0.2s ease-in-out;
+	z-index: 2;
 	&:hover {
 		background-color: whitesmoke;
-		opacity: 0.6;
+		opacity: 0.5;
 	}
 }
 
 .icon {
 	padding: 0px 2px;
 	text-align: center;
+	pointer-events: none;
 	svg {
 		width: 30px;
 		height: 25px;
-		fill: #4e4378;
+		fill: #4e4376;
+		pointer-events: none;
 	}
 }
 
@@ -46,7 +49,7 @@
 	padding-top: 5px;
 	padding-bottom: 5px;
 	font-weight: bold;
-	color: #4e4378;
+	color: #4e4376;
 }
 
 .larger {

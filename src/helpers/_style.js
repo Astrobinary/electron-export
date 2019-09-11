@@ -6,7 +6,13 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 	let style = "";
 	let rootatt;
 
-	group.el[0].att.bmline ? (att = group.el[1].att) : (att = group.el[0].att);
+	if (group.hasOwnProperty("el")) {
+		if (group.el[1] !== undefined) {
+			group.el[0].att.bmline ? (att = group.el[1].att) : (att = group.el[0].att);
+		} else {
+			att = group.el[0].att;
+		}
+	}
 
 	rootStyle.forEach(item => {
 		if (item.att.name === group.att.style) {

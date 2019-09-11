@@ -1,0 +1,45 @@
+.JobInfoBar {
+	display: flex;
+	background-color: white;
+	height: 75px;
+	width: 100%;
+	flex-direction: row;
+	justify-content: space-between;
+	z-index: 99;
+	user-select: none;
+	box-shadow: 0px -5px 20px 0px rgba(0, 0, 0, 0.3);
+	text-overflow: ellipsis;
+}
+
+.jobNumber {
+	font-size: 28px;
+	padding-left: 10px;
+	padding-right: 10px;
+	text-align: center;
+	letter-spacing: 1px;
+	font-weight: bold;
+	line-height: 75px;
+	flex-grow: 2;
+	max-width: 390px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	color: #4e4376;
+	-webkit-app-region: drag;
+}
+
+.job {
+	font-size: 14px;
+	font-weight: 400;
+	color: #777777;
+	opacity: 0.7 !important;
+	div {
+		padding: 0 10px;
+		svg {
+			fill: #777777;
+		}
+	}
+	&:hover {
+		opacity: 1 !important;
+	}
+}

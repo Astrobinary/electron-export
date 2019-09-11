@@ -34,7 +34,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 
 		//Handles 2nd line indent
 		if (group.el.length > 1)
-			if (group.el[1].att.lindent > group.el[0].att.lindent) {
+			if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
 				divStyle.push(`margin-left: ${group.el[1].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
 			}
 
@@ -127,7 +127,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 								} else {
 									el.txt = el.txt.trim();
 								}
-							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt)) || /\s—/.test(el.txt)) {
+							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
 								el.txt = el.txt.replace(/ +?/g, "");
 							}
 

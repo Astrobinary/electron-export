@@ -15,6 +15,7 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 ***
 
 ## HTML TODO:
+- JOB_nt10003828x1_s4-FILED error
 
 #### Text
 - Continued header not properly breaking between lines. Something to do with CGT and empty lines (Wabtec F-22)
@@ -25,6 +26,8 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 - Continued headers breaking issues
 - Headers last column does not need ch spacing
 - Text indent folio 3 (nc10000790x1_def14a-FILED)
+- Handle box all
+- Set row to max-height 
 - Table width
 - Take into account shapes (shading) that display negative att.x values.
 - Handle EDGAR shading exceptions.

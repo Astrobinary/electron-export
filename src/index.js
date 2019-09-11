@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { ipcRenderer as ipc, remote } from "electron";
 import Handlebars from "handlebars";
@@ -6,8 +6,10 @@ import fs from "fs";
 import pretty from "pretty";
 import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
-import Statusbar from "./components/Statusbar/statusbar";
+import JobInfoBar from "./components/JobInfoBar/jobinfobar";
+import DebugWindow from "./components/DebugWindow/debugwindow";
 import Buttonbar from "./components/Buttonbar/buttonbar";
+import Statusbar from "./components/Statusbar/statusbar";
 
 import generateJSON from "../src/utils/jsonConverter";
 
@@ -15,11 +17,13 @@ import "./helpers";
 import "./global.scss";
 
 const Renderer = () => {
-	// const [json, setJson] = useState(null);
+	const path = useRef();
 
 	useEffect(() => {
-		ipc.on("debug", (e, msg) => {
-			console.log(msg);
+		ipc.on("saveLocation", (e, newPath) => {
+			path.current = newPath;
+
+			e.sender.send("debugRelay", `\nNew save path selected: ${newPath}\n`);
 		});
 
 		ipc.on("complie", e => {
@@ -27,19 +31,23 @@ const Renderer = () => {
 			const output = template(JSON.parse(json), "utf8");
 			const dir = `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test`;
 
-			if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-
 			let stream;
+
 			if (isDev) {
-				stream = fs.createWriteStream("./output/index.htm");
+				if (path.current === undefined) {
+					console.log("here");
+					stream = fs.createWriteStream(`./output/index.htm`);
+				} else {
+					stream = fs.createWriteStream(path.current);
+				}
 			} else {
-				stream = fs.createWriteStream(`N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test\\index.htm`);
+				if (path.current === undefined) {
+					if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+					stream = fs.createWriteStream(`N:\\HTML\\Out\\${remote.getGlobal("jobNumber")} ~test\\${remote.getGlobal("jobNumber")}.htm`);
+				} else {
+					stream = fs.createWriteStream(path.current);
+				}
 			}
-
-			stream.on("end", () => {
-				e.sender.send("debug", `HTML FILE GENERATED`);
-			});
-
 			stream.once("open", () => {
 				const html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
 				stream.end(
@@ -48,12 +56,20 @@ const Renderer = () => {
 					})
 				);
 			});
+
+			if (path.current !== undefined) {
+				e.sender.send("debugRelay", `HTML created at: ${path.current}`);
+			} else {
+				e.sender.send("debugRelay", `HTML files created`);
+			}
 		});
 	});
 
 	return (
 		<React.Fragment>
 			<Titlebar />
+			<JobInfoBar />
+			<DebugWindow />
 			<Buttonbar />
 			<Statusbar />
 		</React.Fragment>

@@ -1,15 +1,13 @@
 .Titlebar {
 	display: flex;
-
 	background-image: linear-gradient(-20deg, #2b5876 0%, #4e4376 100%);
-
 	width: 100%;
 	height: 30px;
 	color: white;
 	flex-direction: row;
 	justify-content: space-between;
 	line-height: 30px;
-	z-index: 100;
+	z-index: 101;
 	user-select: none;
 }
 

@@ -7,10 +7,10 @@ let mainWindow;
 
 const createWindow = () => {
 	mainWindow = new BrowserWindow({
-		width: 600,
+		width: 625,
 		height: 700,
 		frame: false,
-		// resizable: false,
+		resizable: false,
 		webPreferences: {
 			nodeIntegration: true
 		}
@@ -32,7 +32,7 @@ const createWindow = () => {
 };
 
 const getJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nt10003590x3_s3a-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nc10000863x1_10k" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);
@@ -61,7 +61,15 @@ ipcMain.on("getXML", e => {
 
 	cmd.on("close", code => {
 		if (code === 0) {
-			e.sender.send("complie");
+			e.sender.send("complie", "Creating html file now...");
 		}
 	});
+});
+
+ipcMain.on("debugRelay", (e, msg) => {
+	e.sender.send("debug", `${msg}`);
+});
+
+ipcMain.on("updateSaveLocation", (e, path) => {
+	e.sender.send("saveLocation", `${path}`);
 });

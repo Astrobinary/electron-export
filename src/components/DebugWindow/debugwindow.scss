@@ -1,0 +1,22 @@
+.DebugWindow {
+	height: 500px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	padding-left: 10px;
+	padding-right: 10px;
+	overflow-y: scroll;
+	font-family: consolas;
+	font-size: 13px;
+}
+
+.scroll1::-webkit-scrollbar {
+	width: 10px;
+}
+
+.scroll1::-webkit-scrollbar-track {
+	background: #ddd;
+}
+
+.scroll1::-webkit-scrollbar-thumb {
+	background: linear-gradient(-20deg, #2b5876 0%, #4e4376 100%);
+}

@@ -1,4 +1,5 @@
 import isDev from "electron-is-dev";
+
 import fs from "fs";
 import convert from "xml-js";
 
@@ -29,7 +30,7 @@ const generateJSON = path => {
 
 	if (isDev)
 		fs.writeFile(`${path}\\gen.json`, results, "utf8", err => {
-			err ? console.log("Error creating file.") : console.log(`JSON file created`);
+			err ? console.log("Error creating file.") : console.log("Json file created");
 		});
 
 	return results;
