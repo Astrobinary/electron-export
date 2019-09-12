@@ -23,14 +23,16 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 	let text = "";
 
 	group.el.forEach((line, lineIndex) => {
-		if (!line.el && line.att.bmline) text += `<div style="${style.inlineCSS(rootStyle, block, group)}">&nbsp;</div>`;
+		if (!line.el && line.att.bmline) {
+			text += `<div style="${style.inlineCSS(rootStyle, block, group)}">&nbsp;</div>`;
+		}
 
 		if (line.hasOwnProperty("el"))
 			line.el.forEach((t, tIndex) => {
 				if (t.name === "t") {
 					if (!t.hasOwnProperty("att")) return;
 					if (t.att.suppress) return;
-					text += parseBlockText(rootStyle, group, groupStyle, line, lineIndex, t, tIndex);
+					text += parseBlockText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
 				} else if (t.name === "xpp") {
 					const ins = style.handleInstructions(t);
 					if (ins !== null) text += ins;
@@ -52,14 +54,27 @@ const listText = (rootStyle, block, group, groupStyle) => {
 	let hangAmount = group.el[1].att.lindent - group.el[0].att.lindent;
 
 	group.el.forEach((line, lineIndex) => {
-		help.onlyType(line.el, "element").forEach((t, tIndex) => {
-			if (t.att.suppress) return;
-			if (lineIndex === 0) {
-				hangCharacters += parseBlockText(rootStyle, group, groupStyle, line, lineIndex, t, tIndex);
-			} else {
-				text += parseBlockText(rootStyle, group, groupStyle, line, lineIndex, t, tIndex);
-			}
-		});
+		if (line.hasOwnProperty("el"))
+			line.el.forEach((t, tIndex) => {
+				if (t.name === "t") {
+					if (!t.hasOwnProperty("att")) return;
+					if (t.att.suppress) return;
+
+					if (lineIndex === 0) {
+						hangCharacters += parseBlockText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
+					} else {
+						text += parseBlockText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
+					}
+				} else if (t.name === "xpp") {
+					const ins = style.handleInstructions(t);
+					if (ins !== null) text += ins;
+				} else if (t.name === "rule") {
+					text += handleBlockRules(line, t);
+				} else if (t.name === "image") {
+					// cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+					text += `<img style="-ms-interpolation-mode: bicubic; width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
+				}
+			});
 	});
 
 	return `<td class="group-prehang" style="width: ${hangAmount}pt">${hangCharacters.trim()}</td><td class="group-hang" style="text-align:${group.el[1].att.qdtype}; max-width: ${group.el[1].att.lnwidth}pt;">${text}</td>`;
@@ -112,7 +127,7 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 	return text;
 };
 
-const parseBlockText = (rootStyle, group, groupStyle, line, lineIndex, t, tIndex) => {
+const parseBlockText = (rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex) => {
 	let text = "";
 	// //Check for empty generated lines
 	if (!t.el) {
@@ -129,6 +144,8 @@ const parseBlockText = (rootStyle, group, groupStyle, line, lineIndex, t, tIndex
 			if (el.type === "instruction") {
 				const ins = style.handleInstructions(el);
 				if (ins !== null) text += ins;
+			} else if (line.att.bmline && el.txt === " ") {
+				text = `<br><br>`;
 			} else {
 				//Adds usb to text
 				if (elIndex > 1) {
@@ -137,6 +154,10 @@ const parseBlockText = (rootStyle, group, groupStyle, line, lineIndex, t, tIndex
 							if (el.txt.split(" ")[0] === "") el.txt = `&nbsp;${el.txt.slice(1)}`;
 						}
 					}
+				}
+
+				if (t.att.x > 0 && el.txt.length > 0) {
+					text += `<var style="padding-left: ${t.att.x}pt;">${text}</var>`;
 				}
 
 				//Wrap text with styling

@@ -45,7 +45,7 @@ const createTable = (block, blockIndex, frame, tgroup, options) => {
 	margin += `margin-top: 6pt;`;
 
 	//Added +5 workaroudn for adding +5 padding to last column
-	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${parseFloat(tgroup.att.tbwidth) + 5}pt; ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
+	const table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${parseFloat(tgroup.att.tbwidth) + 6}pt; ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
 
 	return table;
 };

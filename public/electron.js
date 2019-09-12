@@ -2,21 +2,31 @@ const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const isDev = require("electron-is-dev");
+const windowStateKeeper = require("electron-window-state");
 const storage = require("electron-json-storage");
 const { spawn } = require("child_process");
 
 let mainWindow;
 
 const createWindow = () => {
+	let mainWindowState = windowStateKeeper({
+		defaultWidth: 625,
+		defaultHeight: 700
+	});
+
 	mainWindow = new BrowserWindow({
-		width: 625,
-		height: 700,
+		x: mainWindowState.x,
+		y: mainWindowState.y,
+		width: mainWindowState.width,
+		height: mainWindowState.height,
 		frame: false,
 		resizable: false,
 		webPreferences: {
 			nodeIntegration: true
 		}
 	});
+
+	mainWindowState.manage(mainWindow);
 
 	mainWindow.loadURL(isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "../build/index.html")}`);
 
@@ -54,7 +64,7 @@ const createWindow = () => {
 };
 
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nc10002459x1_10k" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nt10001108x1_s4-FILED" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);
@@ -84,7 +94,7 @@ app.on("activate", () => {
 });
 
 ipcMain.on("getXML", e => {
-	if(isDev && fs.existsSync(`${global.jobLocation}\\tout.xml`)){
+	if (isDev && fs.existsSync(`${global.jobLocation}\\tout.xml`)) {
 		console.log("XML Already generated.");
 		e.sender.send("complie");
 		return;

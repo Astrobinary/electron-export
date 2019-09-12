@@ -134,10 +134,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	//If broken with a <qa> and alignment is different; has to be last T in an line element
 	if (group.el[0].att.qdtype !== line.att.qdtype && line.att.quadset && line.el.length - 1 === tIndex && text.length > 1 && line.att.qdtype !== "forcej") {
 		if (/\S/.test(text)) if (group.el[lineIndex - 1].att.quadset === "true") text = `<div style="text-align: ${line.att.qdtype};">${text}</div>`;
-	} else if (line.att.quadset && text.length > 1 && t.att.cgt) {
-		text += `</br>`;
 	}
-
 	//Handles strikes and double underlines
 	if (t.att.hasOwnProperty("ul8")) styles += `text-decoration: line-through;`;
 	if (t.att.hasOwnProperty("ul10")) styles += `border-bottom: 3px double;`;
@@ -240,6 +237,9 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	//Cell Hrule
 	if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
 
+	let shading = getShading(col);
+
+	if (shading !== undefined) rowStyle.push(`background-color: ${shading};`);
 	return rowStyle.join(" ");
 };
 
@@ -249,6 +249,24 @@ module.exports.isLastColumn = (tgroup, col) => {
 	if (parseInt(tgroup.att.cols) === parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) return true;
 
 	return false;
+};
+
+const getShading = col => {
+	let shadeColor;
+
+	col.el.forEach((group, groupIndex) => {
+		group.el.forEach((line, lineIndex) => {
+			if (line.el === undefined) return;
+			line.el.forEach((t, tIndex) => {
+				if (t.name === "shape") {
+					shadeColor = t.att.color;
+					return shadeColor;
+				}
+			});
+		});
+	});
+
+	return shadeColor;
 };
 
 module.exports.hasCalHang = col => {
@@ -274,6 +292,8 @@ module.exports.hasCalHang = col => {
 module.exports.handleInstructions = el => {
 	if (el.ins === "qa") return `<br/>`;
 	if (el.ins === "l") return `<br/>`;
+
+	if (el.ins === "lz") return `&nbsp;`;
 
 	if (el.ins.includes("link;")) return `<a href="${el.ins.slice(5)}">`;
 	if (el.ins === "/link") return `</a>`;

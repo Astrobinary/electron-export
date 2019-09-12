@@ -13,7 +13,7 @@ module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex
 	let rowspan = "";
 	if (col.att.morerows !== undefined) colspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 
-	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="bottom" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
+	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
 };
 
 const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
@@ -78,20 +78,17 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							}
 						} else {
 							divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
-
 							if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						}
 					} else {
 						if (!isNumber && !isLast) {
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						} else {
-							if (Math.abs(parseFloat(colspec.att.colwidth) - parseFloat(colspec.att.tbclwsp) - parseFloat(line.att.lnwidth)) > 0.2) {
-								divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
-							}
+							// if (Math.abs(parseFloat(colspec.att.colwidth) - parseFloat(colspec.att.tbclwsp) - parseFloat(line.att.lnwidth)) > 0.1) {
+							if (col.att.nameend === undefined) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+							// }
 						}
 					}
-				} else {
-					divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 				}
 			} else {
 				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`); //Apply style to header column 1
@@ -105,7 +102,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
 						divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
-					} else if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length < 1) {
+					} else if (t.att.x > 0 && text.length < 1) {
 						if (tIndex > 1) {
 							const offSet = tXpos(line, t, tIndex);
 							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
@@ -125,15 +122,15 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							if (t.att.cgt && el.txt === ".") return;
 
 							//Removes spaces from fin numbers
-							if (/\d/.test(el.txt) && isNumber) {
-								if (/\$/.test(el.txt)) {
-									el.txt = el.txt.replace(/ +?/g, "");
-								} else {
-									el.txt = el.txt.trim();
-								}
-							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
-								el.txt = el.txt.replace(/ +?/g, "");
-							}
+							// if (/\d/.test(el.txt) && isNumber) {
+							// 	if (/\$/.test(el.txt)) {
+							// 		el.txt = el.txt.replace(/ +?/g, "");
+							// 	} else {
+							// 		el.txt = el.txt.trim();
+							// 	}
+							// } else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
+							// 	el.txt = el.txt.replace(/ +?/g, "");
+							// }
 
 							//Offset % when hangs off table
 							if (isNumber && el.txt.includes("%")) divStyle.push(`margin-right: 2.5ch;`);
@@ -146,12 +143,11 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 									}
 								}
 							}
+							//Wraps text in style
+							text += style.wrapBlockText(el.txt, t.att.style, rootStyle, group, line, group.att.style, t, tIndex, lineIndex, elIndex);
 
 							//Add line break to generated text that does not have instructions
 							if (line.att.quadset && t.att.cgt) text += `<br/>`;
-
-							//Wraps text in style
-							text += style.wrapBlockText(el.txt, t.att.style, rootStyle, group, line, group.att.style, t, tIndex, lineIndex, elIndex);
 						}
 					});
 				}

@@ -27,7 +27,15 @@ const Renderer = () => {
 		});
 
 		ipc.on("complie", e => {
-			const json = generateJSON(remote.getGlobal("jobLocation"));
+			let json;
+
+			if (isDev && fs.existsSync(`${remote.getGlobal("jobLocation")}\\gen.json`)) {
+				console.log("JSON Already generated.");
+				json = fs.readFileSync(`${remote.getGlobal("jobLocation")}\\gen.json`);
+			} else {
+				json = generateJSON(remote.getGlobal("jobLocation"));
+			}
+
 			const output = template(JSON.parse(json), "utf8");
 			const dir = `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")}`;
 
