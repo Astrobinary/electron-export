@@ -36,7 +36,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 	}
 
 	if (group.el[0].att.rindent > 0) {
-		style += `padding-left: ${att.rindent}pt;`;
+		style += `padding-right: ${att.rindent}pt;`;
 	}
 
 	//Right indent
@@ -197,7 +197,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (colspec.att.tbclgut > 0) {
 		//Cell Header rows
 		if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
-			if (tgroup.att.tgroupstyle === "fintab") rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
+			if (tgroup.att.tgroupstyle === "fintab" && tgroup.att.cols === col.att.col) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 
 			if (col.att.namest !== undefined) {
 				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
