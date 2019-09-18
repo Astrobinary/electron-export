@@ -1,9 +1,10 @@
 const Handlebars = require("handlebars");
 const { remote } = require("electron");
+const fs = require("fs");
 const help = require("./index");
 const style = require("./_style");
 const table = require("./_table");
-// const cmd = require("node-cmd");
+const cmd = require("node-cmd");
 
 Handlebars.registerHelper("display_text", (rootStyle, block, group) => {
 	let text = "";
@@ -39,7 +40,11 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 				} else if (t.name === "rule") {
 					text += handleBlockRules(line, t);
 				} else if (t.name === "image") {
-					// cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+					const folder = remote.getGlobal("saveLocation");
+					if (!fs.existsSync(`${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg`)) {
+						cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+					}
+
 					text += `<img style="-ms-interpolation-mode: bicubic; width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});
@@ -71,7 +76,10 @@ const listText = (rootStyle, block, group, groupStyle) => {
 				} else if (t.name === "rule") {
 					text += handleBlockRules(line, t);
 				} else if (t.name === "image") {
-					// cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+					const folder = remote.getGlobal("saveLocation");
+					if (!fs.existsSync(`${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg`)) {
+						cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+					}
 					text += `<img style="-ms-interpolation-mode: bicubic; width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});

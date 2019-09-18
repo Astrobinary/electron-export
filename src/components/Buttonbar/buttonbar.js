@@ -3,7 +3,7 @@ import { ipcRenderer as ipc, remote } from "electron";
 import { FaFillDrip, FaPlay, FaPager, FaRegSave, FaRadiation } from "react-icons/fa";
 import "./buttonbar.scss";
 
-const Buttonbar = () => {
+const Buttonbar = props => {
 	const [config, setConfig] = useState({
 		edgarShade: remote.getGlobal("edgarShade"),
 		tocHeader: remote.getGlobal("tocHeader"),
@@ -23,14 +23,14 @@ const Buttonbar = () => {
 		setConfig({ ...config, marked: !config.marked });
 	};
 	const saveTo = () => {
-		remote.dialog.showSaveDialog({ defaultPath: `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")}.htm`, title: "Select save location for HTML files" }, filePath => {
+		remote.dialog.showSaveDialog({ defaultPath: `N:\\HTML\\Out\\${remote.getGlobal("jobNumber")}.htm`, title: "Select new save location for HTML files" }, filePath => {
 			if (filePath !== undefined) ipc.send("updateSaveLocation", filePath);
 		});
 	};
 	const openSettings = () => {};
 
 	const startExport = () => {
-		ipc.send("getXML");
+		ipc.send("getXML", props.newpath.current);
 	};
 
 	return (

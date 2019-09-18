@@ -33,9 +33,6 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 - Handle rule exceptions.
 - Generate vertical rules.
 
-#### Images
-- Export images based on job overview.
-
 #### House Only
 - Special regcov rules to ignore vertical spacing.
 - Hanging characters on tables. (Noticeable with EDGAR shading)

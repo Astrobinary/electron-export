@@ -42,6 +42,8 @@ const createWindow = () => {
 	setJobFolderLocation();
 	storage.setDataPath(global.jobFolderLocation);
 
+	global.saveLocation = "";
+
 	storage.get("config", function(error, data) {
 		if (error) throw error;
 
@@ -64,7 +66,7 @@ const createWindow = () => {
 };
 
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nt10001108x1_s4-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_s002386x8_drsa-FILED" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);
@@ -93,10 +95,17 @@ app.on("activate", () => {
 	if (mainWindow === null) createWindow();
 });
 
-ipcMain.on("getXML", e => {
+ipcMain.on("getXML", (e, path) => {
+	let folder = path.substr(0, path.lastIndexOf("\\"));
+
+	if (folder.includes("htm")) folder = path.substr(0, path.lastIndexOf("/"));
+
+	global.saveLocation = folder;
+
 	if (isDev && fs.existsSync(`${global.jobLocation}\\tout.xml`)) {
 		console.log("XML Already generated.");
 		e.sender.send("complie");
+
 		return;
 	}
 
@@ -119,6 +128,7 @@ ipcMain.on("debugRelay", (e, msg) => {
 
 ipcMain.on("updateSaveLocation", (e, path) => {
 	e.sender.send("saveLocation", `${path}`);
+	global.saveLocation = path;
 });
 
 ipcMain.on("updateConfig", (e, obj, key, value) => {
