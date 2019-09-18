@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 import { ipcRenderer as ipc, remote, shell } from "electron";
 import Handlebars from "handlebars";
 import fs from "fs";
-import dir from "path";
 import pretty from "pretty";
 import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
@@ -21,27 +20,28 @@ const Renderer = () => {
 	let path = useRef();
 
 	useEffect(() => {
-		const today = new Date();
-		const pm = today.getHours() >= 12 ? "pm" : "am";
-		const hour = ((today.getHours() + 11) % 12) + 1;
-		const time = hour + "." + today.getMinutes() + pm;
-
-		let uniqueFolder = `${remote.getGlobal("jobNumber")}_(${time})`;
+		let uniqueFolder = remote.getGlobal("jobNumber");
 
 		if (isDev) {
-			path.current = `C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\${uniqueFolder}\\${remote.getGlobal("jobNumber")}.htm`;
+			path.current = `C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\index.htm`;
 		} else {
 			path.current = `N:\\HTML\\Out\\${uniqueFolder}\\${remote.getGlobal("jobNumber")}.htm`;
 		}
 
 		ipc.on("saveLocation", (e, newPath) => {
 			path.current = newPath;
-			e.sender.send("debugRelay", `New save path selected: ${path.current}`);
+
+			e.sender.send("debugRelay", `\nNew save path selected: ${path.current}\n`);
 		});
 
 		ipc.on("complie", e => {
-			let folder = `${remote.getGlobal("saveLocation")}`;
-			if (!fs.existsSync(folder)) fs.mkdirSync(folder);
+			let folder = remote.getGlobal("saveLocation");
+
+			if (fs.existsSync(folder)) {
+				if (folder.includes("N:\\HTML\\Out") || folder.includes("C:\\Users\\padillab\\Documents\\Development")) deleteFolderRecursive(folder);
+			} else {
+				fs.mkdirSync(folder);
+			}
 
 			let json;
 			if (isDev && fs.existsSync(`${remote.getGlobal("jobLocation")}\\gen.json`)) {
@@ -51,10 +51,12 @@ const Renderer = () => {
 				json = generateJSON(remote.getGlobal("jobLocation"));
 			}
 
+			const output = template(JSON.parse(json), "utf8");
+
 			let stream;
+
 			stream = fs.createWriteStream(path.current);
 
-			const output = template(JSON.parse(json), "utf8");
 			stream.once("open", () => {
 				const html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
 				stream.end(
@@ -85,8 +87,10 @@ const deleteFolderRecursive = path => {
 		fs.readdirSync(path).forEach(function(file) {
 			var curPath = path + "/" + file;
 			if (fs.lstatSync(curPath).isDirectory()) {
+				// recurse
 				deleteFolderRecursive(curPath);
 			} else {
+				// delete file
 				fs.unlinkSync(curPath);
 			}
 		});
