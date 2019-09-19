@@ -82,7 +82,8 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 			fontFamily = "Arial";
 		}
 
-		let lineHeight = `line-height: ${parseFloat(rootatt.size) + parseFloat(att.ldextra)}pt;`;
+		let lineHeight = "";
+		if (group.el.length > 1) lineHeight = `line-height: ${parseFloat(rootatt.size) + parseFloat(att.ldextra)}pt;`;
 
 		if (group.el[0].hasOwnProperty("el")) {
 			if (group.el[0].el.length > 1) {
@@ -223,7 +224,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	rowStyle.push(`font-size: ${rootAtt.size}pt;`);
 
 	//Cell line height
-	rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
+	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
 
 	//Cell width/height
 	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`);
