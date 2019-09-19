@@ -16,6 +16,9 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 
 ## HTML TODO:
 
+#### Bugs
+
+
 #### Text
 - Continued header not properly breaking between lines. Something to do with CGT and empty lines (Wabtec F-22)
 - Footer not centered (Wabtec F-38)
@@ -32,6 +35,7 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 - Handle EDGAR shading exceptions.
 - Handle rule exceptions.
 - Generate vertical rules.
+- Check if <br> should be added by checking if next line element is on the same x cord.
 
 #### House Only
 - Special regcov rules to ignore vertical spacing.

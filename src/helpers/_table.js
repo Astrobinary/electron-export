@@ -1,4 +1,6 @@
 const style = require("./_style");
+const { remote } = require("electron");
+const cmd = require("node-cmd");
 
 module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
 	const colspec = colspecs[col.att.col - 1];
@@ -150,6 +152,12 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							if (line.att.quadset && t.att.cgt) text += `<br/>`;
 						}
 					});
+				}
+
+				if (t.name === "image") {
+					const folder = remote.getGlobal("saveLocation");
+					cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+					text += `<img style="width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});
 		});

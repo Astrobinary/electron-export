@@ -31,7 +31,11 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 				style += `padding-left: ${att.lindent}pt;`;
 			}
 		} else {
-			style += `text-indent: ${att.lindent}pt;`;
+			if (group.att.class === "foots") {
+				style += `padding-left: ${att.lindent}pt;`;
+			} else {
+				style += `text-indent: ${att.lindent}pt;`;
+			}
 		}
 	}
 
@@ -153,7 +157,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	}
 
 	//Handles bullets
-	if (text === "󰄝") text = `<font style=" font-size: 16pt; line-height: 12pt;">&#8226;</font>`; //Bullet to html??
+	if (text === "󰄝") text = `&#8226;`; //Bullet to html??
 	if (text === "□") text = `&#9744;`; //ebox to html??
 
 	//Handles underlines

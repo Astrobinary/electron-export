@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, globalShortcut } = require("electron");
+const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const isDev = require("electron-is-dev");
@@ -66,7 +66,7 @@ const createWindow = () => {
 };
 
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_s002386x8_drsa-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_s002577x5_424b5-FILED" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);
@@ -139,4 +139,8 @@ ipcMain.on("updateConfig", (e, obj, key, value) => {
 	global[key] = value;
 
 	e.sender.send("debug", `Config file successfully updated. ${key}: ${value}`);
+});
+
+ipcMain.on("show-error", (e, err) => {
+	dialog.showErrorBox("ERROR", err);
 });

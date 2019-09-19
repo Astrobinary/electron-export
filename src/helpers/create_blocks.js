@@ -32,8 +32,18 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 const createSumbox = el => {
 	let ruleStyle = "solid";
 	let padding = "padding: 10pt 15pt 10pt 10pt;";
-	let ruleAtt = el[0].el[0].el[1].att;
-	if (ruleAtt.w === "0.5") ruleAtt.w = "1";
+	let ruleAtt;
+	if (el[0].el[0].el[1] !== undefined) {
+		ruleAtt = el[0].el[0].el[1].att;
+	}
+
+	if (ruleAtt === undefined) {
+		ruleAtt = {};
+		ruleAtt.w = "1";
+		ruleAtt.color = "black";
+	} else if (ruleAtt.w === "0.5") {
+		ruleAtt.w = "1";
+	}
 
 	return `border: ${ruleAtt.w}pt ${ruleStyle} ${ruleAtt.color}; ${padding}`;
 };

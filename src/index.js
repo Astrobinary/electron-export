@@ -23,7 +23,7 @@ const Renderer = () => {
 		let uniqueFolder = remote.getGlobal("jobNumber");
 
 		if (isDev) {
-			path.current = `C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\index.htm`;
+			path.current = `C:\\Users\\padillab\\Documents\\Development\\electron-export\\output\\${uniqueFolder}\\${remote.getGlobal("jobNumber")}.htm`;
 		} else {
 			path.current = `N:\\HTML\\Out\\${uniqueFolder}\\${remote.getGlobal("jobNumber")}.htm`;
 		}
@@ -37,9 +37,8 @@ const Renderer = () => {
 		ipc.on("complie", e => {
 			let folder = remote.getGlobal("saveLocation");
 
-			if (fs.existsSync(folder)) {
-				if (folder.includes("N:\\HTML\\Out") || folder.includes("C:\\Users\\padillab\\Documents\\Development")) deleteFolderRecursive(folder);
-			} else {
+			if (!fs.existsSync(folder)) {
+				// if (folder.includes("N:\\HTML\\Out") || folder.includes("C:\\Users\\padillab\\Documents\\Development")) deleteFolderRecursive(folder);
 				fs.mkdirSync(folder);
 			}
 
@@ -87,14 +86,18 @@ const deleteFolderRecursive = path => {
 		fs.readdirSync(path).forEach(function(file) {
 			var curPath = path + "/" + file;
 			if (fs.lstatSync(curPath).isDirectory()) {
-				// recurse
 				deleteFolderRecursive(curPath);
 			} else {
-				// delete file
 				fs.unlinkSync(curPath);
 			}
 		});
-		fs.rmdirSync(path);
+
+		fs.rmdir(path, err => {
+			if (err) {
+				console.log(err);
+				remote.dialog.showMessageBox({ type: "error", title: "Error", message: err.toString() });
+			}
+		});
 		fs.mkdirSync(path);
 	}
 };
