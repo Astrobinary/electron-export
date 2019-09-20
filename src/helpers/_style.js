@@ -226,17 +226,28 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	//Cell line height
 	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
 
-	//Cell width/height
+	//Cell width
 	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`);
-	if (col.att.col === "1") rowStyle.push(`min-width: ${colspec.att.tbcmeas}pt;`);
+	if (col.att.col === "1") {
+	}
 
-	//Last row height fix
-	if (parseInt(tgroup.att.mx_rows) === parseInt(row.att.rowrel)) {
-		if (tgroup.el[tgroup.el.length - 1].el[rowIndex - 1] !== undefined) {
-			rowStyle.push(`height: ${parseInt(row.att.tbrdepth) - parseInt(tgroup.el[tgroup.el.length - 1].el[rowIndex - 1].att.row_gutter) / 2}pt;`);
+	//Row gutter
+	if (rowIndex + 1 > tgroup.att.hdstyle_rows) {
+		if (rowIndex === parseInt(tgroup.att.hdr_rows)) {
+			if (parseInt(row.att.row_gutter) <= 6) {
+				rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
+			}
 		}
+		if (rowIndex + 1 === parseInt(tgroup.att.mx_rows)) {
+			if (parseInt(row.att.row_gutter) <= 6) {
+				console.log();
+				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
+			}
+		}
+
+		// if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt; padding-bottom: ${parseInt(row.att.row_gutter) / 2}pt`);
 	} else {
-		rowStyle.push(`height: ${row.att.tbrdepth}pt;`);
+		if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
 	}
 
 	//Cell Hrule

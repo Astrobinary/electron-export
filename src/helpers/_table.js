@@ -124,15 +124,16 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							if (t.att.cgt && el.txt === ".") return;
 
 							//Removes spaces from fin numbers
-							// if (/\d/.test(el.txt) && isNumber) {
-							// 	if (/\$/.test(el.txt)) {
-							// 		el.txt = el.txt.replace(/ +?/g, "");
-							// 	} else {
-							// 		el.txt = el.txt.trim();
-							// 	}
-							// } else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
-							// 	el.txt = el.txt.replace(/ +?/g, "");
+
+							if (isNumber) {
+								el.txt = el.txt.replace(/\s/g, "");
+							}
+
+							// if (isNumber) {
+							// 	el.txt = el.txt.replace(/(\$)[\s]+(\d)/gm, "$1$2");
 							// }
+
+							// (\$)[\s]+(\d)
 
 							//Offset % when hangs off table
 							if (isNumber && el.txt.includes("%")) divStyle.push(`margin-right: 2.5ch;`);
@@ -145,6 +146,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 									}
 								}
 							}
+
 							//Wraps text in style
 							text += style.wrapBlockText(el.txt, t.att.style, rootStyle, group, line, group.att.style, t, tIndex, lineIndex, elIndex);
 
@@ -162,6 +164,9 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 			});
 		});
 	});
+
+	if (text.length < 1) text += `&nbsp;`;
+
 	return `<div style="${divStyle.join(" ")}">${text}</div>`;
 };
 
