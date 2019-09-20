@@ -66,7 +66,7 @@ const createWindow = () => {
 };
 
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_s002382x9_defm14a-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nt10002728x1_424b5-FILED" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);

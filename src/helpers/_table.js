@@ -25,9 +25,6 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 	let text = "";
 	let divStyle = [];
 
-	//Stop financial numbers from wrapping
-	if (isNumber) divStyle.push(`white-space: nowrap;`);
-
 	col.el.forEach((group, groupIndex) => {
 		let maxWidth = 0;
 
@@ -50,15 +47,19 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double;`); // double trule
 			}
 
+			//Stop financial numbers from wrapping
+			if (line.att.first && line.att.last) divStyle.push(`white-space: nowrap;`);
+
+			if (line.att.first && line.att.last && line.att.bandwidth < 2.66 && line.att.bandwidth > 0) divStyle.push(`letter-spacing: -${((2.66 - parseFloat(line.att.bandwidth)) / 10).toFixed(3)}pt;`);
+
 			//Gets max width per each line
 			let currentWidth = 0;
-			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth) - 5.25;
+			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth) - 4.25;
 			maxWidth = Math.max(maxWidth, currentWidth);
 
+			let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
 			//Apply styles to body rows only
 			if (rowIndex + 1 > tgroup.att.hdstyle_rows) {
-				let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
-
 				//If fin number is on its own line, add line measure difference to the right
 				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
 
@@ -79,21 +80,26 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 								divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
 							}
 						} else {
-							divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
+							// divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
 							if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						}
 					} else {
 						if (!isNumber && !isLast) {
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+							if (col.att.col !== "1") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
 						} else {
 							// if (Math.abs(parseFloat(colspec.att.colwidth) - parseFloat(colspec.att.tbclwsp) - parseFloat(line.att.lnwidth)) > 0.1) {
-							if (col.att.nameend === undefined) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+							// if (col.att.nameend === undefined) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 							// }
+							if (col.att.col !== "1") divStyle.push(`padding-right: ${colspec.att.tbcrgut}pt;`);
 						}
 					}
+				} else {
+					if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`padding-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
 				}
 			} else {
-				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`); //Apply style to header column 1
+				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`); //Apply style to header column 1
+				if (!isLast) divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut) / 2}pt;`);
 			}
 
 			line.el.forEach((t, tIndex) => {
@@ -125,13 +131,13 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 
 							//Removes spaces from fin numbers
 
-							if (isNumber) {
-								el.txt = el.txt.replace(/\s/g, "");
-							}
-
-							// if (isNumber) {
-							// 	el.txt = el.txt.replace(/(\$)[\s]+(\d)/gm, "$1$2");
+							// if (isNumber && ) {
+							// 	el.txt = el.txt.replace(/\s/g, "");
 							// }
+
+							if (isNumber) {
+								el.txt = el.txt.replace(/(\$)[\s]+(\d)/gm, "$1$2");
+							}
 
 							// (\$)[\s]+(\d)
 
