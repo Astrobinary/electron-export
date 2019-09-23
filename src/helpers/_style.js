@@ -203,7 +203,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 
 	if (colspec.att.tbclgut > 0) {
 		//Cell Header rows
-		if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {
+		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows)) {
 			if (tgroup.att.tgroupstyle === "fintab" && tgroup.att.cols === col.att.col) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 
 			if (col.att.namest !== undefined) {
@@ -219,7 +219,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (isLast && tgroup.att.tgroupstyle === "fintab" && this.hasCalHang(col)) {
 		rowStyle.push(`padding-right: 2ch;`);
 	} else if (isLast && tgroup.att.tgroupstyle === "fintab") {
-		// rowStyle.push(`padding-right: 0.5ch;`);
+		rowStyle.push(`padding-right: 0.5ch;`);
 	}
 
 	//Cell text size
@@ -234,13 +234,13 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	}
 
 	//Row gutter
-	if (rowIndex + 1 > tgroup.att.hdstyle_rows) {
-		if (rowIndex === parseInt(tgroup.att.hdr_rows)) {
+	if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows)) {
+		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.hdr_rows)) {
 			if (parseInt(row.att.row_gutter) <= 6) {
 				rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
 			}
 		}
-		if (rowIndex + 1 === parseInt(tgroup.att.mx_rows)) {
+		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.mx_rows)) {
 			if (parseInt(row.att.row_gutter) <= 6) {
 				console.log();
 				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);

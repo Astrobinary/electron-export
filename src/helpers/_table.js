@@ -59,7 +59,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 
 			let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
 			//Apply styles to body rows only
-			if (rowIndex + 1 > tgroup.att.hdstyle_rows) {
+			if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows)) {
 				//If fin number is on its own line, add line measure difference to the right
 				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
 
@@ -85,9 +85,10 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					} else {
 						if (!isNumber && !isLast) {
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
-							if (col.att.col !== "1") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
+							if (col.att.col !== "1") divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						} else {
 							if (col.att.col !== "1") divStyle.push(`padding-right: ${colspec.att.tbcrgut}pt;`);
+							if (col.att.col !== "1" && !isNumber) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						}
 					}
 				} else {

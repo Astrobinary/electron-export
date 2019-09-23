@@ -116,7 +116,7 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 				td += table.parseTD(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec);
 			});
 
-			if (rowIndex + 1 > tgroup.att.hdstyle_rows && tgroup.att.tgroupstyle === "fintab") {
+			if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows) && tgroup.att.tgroupstyle === "fintab") {
 				if (tgroup.att.stubcols && remote.getGlobal("edgarShade")) {
 					if (row.att.row % 2 === 0) {
 						text += `<tr row="${row.att.rowrel}">${td}</tr>`;
