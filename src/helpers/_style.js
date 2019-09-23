@@ -199,6 +199,8 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 		}
 	});
 
+	if (!colspec.hasOwnProperty("att")) return;
+
 	if (colspec.att.tbclgut > 0) {
 		//Cell Header rows
 		if (tgroup.att.hdstyle_rows !== "0" && rowIndex + 1 <= tgroup.att.hdstyle_rows) {

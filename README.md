@@ -36,6 +36,7 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 - Handle rule exceptions.
 - Generate vertical rules.
 - Check if <br> should be added by checking if next line element is on the same x cord.
+- Font family needs to be set
 
 #### House Only
 - Special regcov rules to ignore vertical spacing.

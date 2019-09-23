@@ -80,7 +80,6 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 								divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
 							}
 						} else {
-							// divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
 							if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						}
 					} else {
@@ -88,9 +87,6 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 							if (col.att.col !== "1") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
 						} else {
-							// if (Math.abs(parseFloat(colspec.att.colwidth) - parseFloat(colspec.att.tbclwsp) - parseFloat(line.att.lnwidth)) > 0.1) {
-							// if (col.att.nameend === undefined) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
-							// }
 							if (col.att.col !== "1") divStyle.push(`padding-right: ${colspec.att.tbcrgut}pt;`);
 						}
 					}
@@ -130,16 +126,15 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							if (t.att.cgt && el.txt === ".") return;
 
 							//Removes spaces from fin numbers
-
-							// if (isNumber && ) {
-							// 	el.txt = el.txt.replace(/\s/g, "");
-							// }
-
-							if (isNumber) {
-								el.txt = el.txt.replace(/(\$)[\s]+(\d)/gm, "$1$2");
+							if (/\d/.test(el.txt) && isNumber) {
+								if (/\$/.test(el.txt)) {
+									el.txt = el.txt.replace(/ +?/g, "");
+								} else {
+									el.txt = el.txt.trim();
+								}
+							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
+								el.txt = el.txt.replace(/ +?/g, "");
 							}
-
-							// (\$)[\s]+(\d)
 
 							//Offset % when hangs off table
 							if (isNumber && el.txt.includes("%")) divStyle.push(`margin-right: 2.5ch;`);

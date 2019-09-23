@@ -65,6 +65,7 @@ const createWindow = () => {
 	mainWindow.on("closed", () => (mainWindow = null));
 };
 
+// CLS_Genfin/GRP_house/JOB_nt10002728x1_424b5-FILED
 const setJobLocation = () => {
 	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nt10002728x1_424b5-FILED" : process.argv[1];
 
@@ -139,8 +140,4 @@ ipcMain.on("updateConfig", (e, obj, key, value) => {
 	global[key] = value;
 
 	e.sender.send("debug", `Config file successfully updated. ${key}: ${value}`);
-});
-
-ipcMain.on("show-error", (e, err) => {
-	dialog.showErrorBox("ERROR", err);
 });

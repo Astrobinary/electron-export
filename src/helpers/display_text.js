@@ -92,16 +92,14 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 	const tgroup = frame.el[0];
 	const colspec = tgroup.el.filter(item => item.name === "colspec");
 	const thead = tgroup.el.filter(item => item.name === "thead");
-	const tbody = tgroup.el[tgroup.el.length - 1].el;
+	let tbody = tgroup.el.filter(item => item.name === "tbody");
 	let tempHead = [];
 	let text = "";
 
 	//Push thead into main body rows
 	if (thead !== undefined)
 		thead.forEach(el => {
-			el.el.forEach(row => {
-				tempHead.push(row);
-			});
+			tempHead.push(el);
 		});
 
 	tempHead = tempHead.reverse();
@@ -110,26 +108,28 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 		tbody.unshift(element);
 	});
 
-	tbody.forEach((row, rowIndex) => {
-		let td = "";
+	tbody.forEach((element, rowIndex) => {
+		element.el.forEach((row, rowIndex) => {
+			let td = "";
 
-		row.el.forEach((col, colIndex) => {
-			td += table.parseTD(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec);
-		});
+			row.el.forEach((col, colIndex) => {
+				td += table.parseTD(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec);
+			});
 
-		if (rowIndex + 1 > tgroup.att.hdstyle_rows && tgroup.att.tgroupstyle === "fintab") {
-			if (tgroup.att.stubcols && remote.getGlobal("edgarShade")) {
-				if (row.att.row % 2 === 0) {
-					text += `<tr row="${row.att.rowrel}">${td}</tr>`;
+			if (rowIndex + 1 > tgroup.att.hdstyle_rows && tgroup.att.tgroupstyle === "fintab") {
+				if (tgroup.att.stubcols && remote.getGlobal("edgarShade")) {
+					if (row.att.row % 2 === 0) {
+						text += `<tr row="${row.att.rowrel}">${td}</tr>`;
+					} else {
+						text += `<tr row="${row.att.rowrel}" style="background-color: #cceeff;">${td}</tr>`;
+					}
 				} else {
-					text += `<tr row="${row.att.rowrel}" style="background-color: #cceeff;">${td}</tr>`;
+					text += `<tr row="${row.att.rowrel}">${td}</tr>`;
 				}
 			} else {
 				text += `<tr row="${row.att.rowrel}">${td}</tr>`;
 			}
-		} else {
-			text += `<tr row="${row.att.rowrel}">${td}</tr>`;
-		}
+		});
 	});
 
 	return text;
