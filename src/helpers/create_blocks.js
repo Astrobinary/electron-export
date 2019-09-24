@@ -20,7 +20,7 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 
 	//Check if previous block contains sumbox instructions
 	if (page[0].att.bsy > 500 && page[0].att.type === "frill" && block.att.type === "main") {
-		builtBlock = `<div class="block-${block.att.type}" style="width: ${parseFloat(block.att.bsx) + 10}pt; ${createSumbox(page[0].el)} display: inline-block; vertical-align: top; margin-left: -20pt; ${margin}">${options.fn(block)}</div>`;
+		builtBlock = `<div class="block-${block.att.type}" style="width: ${parseFloat(block.att.bsx) + 10}pt; ${createSumbox(page[0].el)} display: inline-block; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	} else {
 		//Standard block
 		builtBlock = `<div class="block-${block.att.type}" style="width: ${block.att.bsx}pt; display: inline-block; ${float} vertical-align: top; ${margin}">${options.fn(block)}</div>`;
@@ -31,7 +31,7 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 
 const createSumbox = el => {
 	let ruleStyle = "solid";
-	let padding = "padding: 10pt 15pt 10pt 10pt;";
+	let padding = "padding: 10pt 10pt 10pt 10pt;";
 	let ruleAtt;
 	if (el[0].el[0].el[1] !== undefined) {
 		ruleAtt = el[0].el[0].el[1].att;

@@ -28,15 +28,6 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 	col.el.forEach((group, groupIndex) => {
 		let maxWidth = 0;
 
-		//Handles indent
-		if (group.el[0].att.lindent > 0) divStyle.push(`padding-left: ${group.el[0].att.lindent}pt;`);
-
-		//Handles 2nd line indent
-		if (group.el.length > 1)
-			if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
-				divStyle.push(`margin-left: ${group.el[1].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
-			}
-
 		group.el.forEach((line, lineIndex) => {
 			if (line.el === undefined) return;
 
@@ -100,6 +91,15 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 			}
 
 			line.el.forEach((t, tIndex) => {
+				//Handles indent
+				if (group.el[0].att.lindent > 0 && line.att.first && line.att.last) divStyle.push(`padding-left: ${group.el[0].att.lindent}pt;`);
+
+				//Handles 2nd line indent
+				if (group.el.length > 1)
+					if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
+						divStyle.push(`margin-left: ${group.el[1].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
+					}
+
 				if (t.type === "instruction") {
 					const ins = style.handleInstructions(t);
 					if (ins !== null) text += ins;

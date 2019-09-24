@@ -3,7 +3,7 @@
 Get job location and display basic information
     
 #### Interface:
-Options: r tags toogle, TOC header toggle, save location, EDGAR shading toggle
+Options: r tags toggle, TOC header toggle, save location, EDGAR shading toggle
 Buttons: Start/Stop, validate links/images
 
 #### Logic
@@ -29,8 +29,6 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 - Continued headers breaking issues
 - Headers last column does not need ch spacing
 - Handle box all
-- Set row to max-height 
-- Table width
 - Handle hstyle center
 - Handle EDGAR shading exceptions.
 - Handle rule exceptions.
