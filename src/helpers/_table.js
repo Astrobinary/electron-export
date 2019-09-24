@@ -104,13 +104,17 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					const ins = style.handleInstructions(t);
 					if (ins !== null) text += ins;
 				} else {
-					if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
+					if (parseFloat(t.att.x) > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
 						divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
 					} else if (t.att.x > 0 && text.length < 1) {
 						if (tIndex > 1) {
 							const offSet = tXpos(line, t, tIndex);
-							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
+							if (offSet > 0) {
+								divStyle.push(`padding-left: ${offSet}pt;`);
+							} else {
+								text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
+							}
 						} else {
 							divStyle.push(`padding-left: ${t.att.x}pt;`);
 						}
