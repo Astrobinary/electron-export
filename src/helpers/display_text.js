@@ -25,7 +25,7 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 
 	group.el.forEach((line, lineIndex) => {
 		if (!line.el && line.att.bmline) {
-			text += `<div style="${style.inlineCSS(rootStyle, block, group)}">&nbsp;</div>`;
+			text += `<div style="${style.inlineCSS(rootStyle, block, group, 0, lineIndex)}">&nbsp;</div>`;
 		}
 
 		if (line.hasOwnProperty("el"))
@@ -56,9 +56,15 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 const listText = (rootStyle, block, group, groupStyle) => {
 	let text = "";
 	let hangCharacters = "";
+	let inlineCSS = "";
+	let level = "";
 	let hangAmount = group.el[1].att.lindent - group.el[0].att.lindent;
 
+	if (group.el[0].att.lindent > 0) level = `padding-left: ${group.el[0].att.lindent}pt;`;
+
 	group.el.forEach((line, lineIndex) => {
+		inlineCSS = style.inlineCSS(rootStyle, block, group, 0, lineIndex);
+
 		if (line.hasOwnProperty("el"))
 			line.el.forEach((t, tIndex) => {
 				if (t.name === "t") {
@@ -85,7 +91,7 @@ const listText = (rootStyle, block, group, groupStyle) => {
 			});
 	});
 
-	return `<td class="group-prehang" style="width: ${hangAmount}pt">${hangCharacters.trim()}</td><td class="group-hang" style="text-align:${group.el[1].att.qdtype}; max-width: ${group.el[1].att.lnwidth}pt;">${text}</td>`;
+	return `<td class="group-prehang" style="${inlineCSS} width: ${hangAmount}pt; ${level}">${hangCharacters.trim()}</td><td class="group-hang" style="${inlineCSS} text-align:${group.el[1].att.qdtype}; max-width: ${group.el[1].att.lnwidth}pt;">${text}</td>`;
 };
 
 const tableText = (rootStyle, block, frame, groupStyle) => {
@@ -166,6 +172,10 @@ const parseBlockText = (rootStyle, block, group, groupStyle, line, lineIndex, t,
 
 				if (t.att.x > 0 && el.txt.length > 0) {
 					text += `<var style="padding-left: ${t.att.x}pt;">${text}</var>`;
+				}
+
+				if (el.txt.toUpperCase().includes("TABLE OF CONTENTS")) {
+					text += `<a name="_toc"></a>`;
 				}
 
 				//Wrap text with styling

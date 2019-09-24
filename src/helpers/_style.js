@@ -1,7 +1,8 @@
+// const { remote } = require("electron");
 const help = require("./index");
 
 //Created style based on element attributes
-module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
+module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 	let att;
 	let style = "";
 	let rootatt;
@@ -28,7 +29,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 				style += `text-indent: ${att.lindent - group.el[1].att.lindent}pt;`;
 				if (group.el[1].att.lindent > 0) style += `padding-left: ${group.el[1].att.lindent}pt;`;
 			} else {
-				style += `padding-left: ${att.lindent}pt;`;
+				if (!help.hasHang(group.el)) style += `padding-left: ${att.lindent}pt;`;
 			}
 		} else {
 			if (group.att.class === "foots") {
@@ -51,13 +52,17 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 		if (att.prelead === "0") {
 			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
 		} else {
-			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+			style += `padding-top: ${parseFloat(att.prelead)}pt;`;
 		}
 	} else {
 		if (gindex === 0 && group.att.class === "ftnote") {
-			style += `margin-top: ${parseFloat(att.prelead) + 5}pt;`;
-		} else {
 			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+		} else {
+			if (parseFloat(att.prelead) < 0) {
+				style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+			} else {
+				style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+			}
 		}
 	}
 	if (group.att.class === "sum1") {
@@ -83,7 +88,9 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex) => {
 		}
 
 		let lineHeight = "";
-		if (group.el.length > 1) lineHeight = `line-height: ${parseFloat(rootatt.size) + parseFloat(att.ldextra)}pt;`;
+		if (group.el.length > 1) {
+			if (!help.hasHang(group.el)) lineHeight = `line-height: ${parseFloat(rootatt.size) + parseFloat(att.ldextra)}pt;`;
+		}
 
 		if (group.el[0].hasOwnProperty("el")) {
 			if (group.el[0].el.length > 1) {
@@ -180,6 +187,11 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	//Wraps text around page ref link
 	if (tIndex > 1 && t.att.cgt) if (group.el[lineIndex].el[tIndex - 1].name === "xref") text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
 
+	// if (remote.getGlobal("marked"))
+	// 	if (t.att.trace === "insert" && !t.att.style.includes("unknown")) {
+	// 		text = `<R style="color: purple;">${text}</R>`;
+	// 	}
+
 	return text;
 };
 
@@ -242,7 +254,6 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 		}
 		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.mx_rows)) {
 			if (parseInt(row.att.row_gutter) <= 6) {
-				console.log();
 				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
 			}
 		}

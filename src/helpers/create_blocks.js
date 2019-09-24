@@ -4,6 +4,8 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 	let builtBlock = "";
 	let margin = "";
 
+	if (block.att.type === "tocheader") return new Handlebars.SafeString(`<a href="#_toc" style="font-size: 8pt; margin-right: 43%; margin-bottom: 20px; display: block;">TABLE OF CONTENTS</a>`);
+
 	if (block.el[0].txt !== undefined) return;
 
 	//Handles float for pc2 blocks
@@ -20,10 +22,10 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 
 	//Check if previous block contains sumbox instructions
 	if (page[0].att.bsy > 500 && page[0].att.type === "frill" && block.att.type === "main") {
-		builtBlock = `<div class="block-${block.att.type}" style="width: ${parseFloat(block.att.bsx) + 10}pt; ${createSumbox(page[0].el)} display: inline-block; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
+		builtBlock = `<div class="block-${block.att.type}" style="width: ${parseFloat(block.att.bsx) + 10}pt; ${createSumbox(page[0].el)} margin: auto; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	} else {
 		//Standard block
-		builtBlock = `<div class="block-${block.att.type}" style="width: ${block.att.bsx}pt; display: inline-block; ${float} vertical-align: top; ${margin}">${options.fn(block)}</div>`;
+		builtBlock = `<div class="block-${block.att.type}" style="width: ${block.att.bsx}pt; margin: auto; ${float} vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	}
 
 	return new Handlebars.SafeString(builtBlock);
