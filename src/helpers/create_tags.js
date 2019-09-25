@@ -50,7 +50,12 @@ const createTable = (block, blockIndex, frame, tgroup, options) => {
 
 	if (remote.getGlobal("marked")) hasInsert = findTraceInTable(tgroup);
 
-	if (frame.att.frame !== "none") border = `border: 1pt solid;`;
+	if (frame.att.frame !== "none") {
+		if (frame.att.topbox) border += `border-top: ${frame.att.topbox}pt solid ${frame.att.btcolor};`;
+		if (frame.att.botbox) border += `border-bottom: ${frame.att.botbox}pt solid ${frame.att.bbcolor};`;
+		if (frame.att.lsidbox) border += `border-left: ${frame.att.lsidbox}pt solid ${frame.att.blcolor};`;
+		if (frame.att.rsidbox) border += `border-right: ${frame.att.rsidbox}pt solid ${frame.att.brcolor};`;
+	}
 
 	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt; `;
 	margin += `margin-top: 6pt;`;

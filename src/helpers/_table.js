@@ -103,7 +103,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 			//Handles 2nd line indent
 			if (group.el.length > 1)
 				if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
-					if (line.att.last) divStyle.push(`margin-left: ${group.el[1].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
+					if (line.att.last) divStyle.push(`margin-left: ${group.el[0].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
 				}
 
 			line.el.forEach((t, tIndex) => {
@@ -115,13 +115,9 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
 						divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
 					} else if (t.att.x > 0 && text.length < 1) {
+						const offSet = tXpos(line, t, tIndex);
 						if (tIndex > 1) {
-							const offSet = tXpos(line, t, tIndex);
-							if (offSet > 0) {
-								divStyle.push(`padding-left: ${offSet}pt;`);
-							} else {
-								text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
-							}
+							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
 						} else {
 							divStyle.push(`padding-left: ${t.att.x}pt;`);
 						}
@@ -184,13 +180,12 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 };
 
 const tXpos = (line, t, tIndex) => {
-	if (line.el === undefined) return;
-
 	let total = 0;
+	if (line.el === undefined) return total;
 
 	for (var i = tIndex; i >= 0; i--) {
 		if (line.el[i].hasOwnProperty("att")) {
-			total += parseFloat(line.el[i].att.x);
+			if (line.el[i].att.hasOwnProperty("x")) total += parseFloat(line.el[i].att.x);
 		}
 	}
 

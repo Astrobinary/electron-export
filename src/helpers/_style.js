@@ -29,12 +29,14 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 				style += `text-indent: ${att.lindent - group.el[1].att.lindent}pt;`;
 				if (group.el[1].att.lindent > 0) style += `padding-left: ${group.el[1].att.lindent}pt;`;
 			} else {
-				if (!help.hasHang(group.el)) style += `padding-left: ${att.lindent}pt;`;
+				if (!help.hasHang(group.el)) {
+					style += `padding-left: ${att.lindent}pt;`;
+				}
 			}
 		} else {
 			if (group.att.class === "foots") {
 				style += `padding-left: ${att.lindent}pt;`;
-			} else {
+			} else if (group.att.style === "sum2") {
 				style += `text-indent: ${att.lindent}pt;`;
 			}
 		}
@@ -48,23 +50,23 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 	style += `text-align: ${att.qdtype}; `;
 
 	//Add margin if not first block in group (used for pc2)
-	if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
-		if (att.prelead === "0") {
-			style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
+	// if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
+	// 	if (att.prelead === "0") {
+	// 		style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
+	// 	} else {
+	// 		style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+	// 	}
+	// } else {
+	if (gindex === 0 && group.att.class === "ftnote") {
+		style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+	} else {
+		if (parseFloat(att.prelead) < 0) {
+			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 		} else {
 			style += `padding-top: ${parseFloat(att.prelead)}pt;`;
 		}
-	} else {
-		if (gindex === 0 && group.att.class === "ftnote") {
-			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
-		} else {
-			if (parseFloat(att.prelead) < 0) {
-				style += `margin-top: ${parseFloat(att.prelead)}pt;`;
-			} else {
-				style += `padding-top: ${parseFloat(att.prelead)}pt;`;
-			}
-		}
 	}
+
 	if (group.att.class === "sum1") {
 		if (group.el.length > 1)
 			if (group.el[1].att.lindent !== 0 && group.el[1].att.lindent < 100) {

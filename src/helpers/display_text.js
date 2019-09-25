@@ -50,6 +50,11 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 			});
 	});
 
+	let tempText = text.replace(/<[^>]*>/gm, "").replace(/\s+/gm, "");
+	if (tempText.toUpperCase().includes("TABLEOFCONTENTS")) {
+		text = `<a name="_toc"></a>${text}`;
+	}
+
 	return text;
 };
 
@@ -172,10 +177,6 @@ const parseBlockText = (rootStyle, block, group, groupStyle, line, lineIndex, t,
 
 				if (t.att.x > 0 && el.txt.length > 0) {
 					text += `<var style="padding-left: ${t.att.x}pt;">${text}</var>`;
-				}
-
-				if (el.txt.toUpperCase().includes("TABLE OF CONTENTS")) {
-					text += `<a name="_toc"></a>`;
 				}
 
 				//Wrap text with styling
