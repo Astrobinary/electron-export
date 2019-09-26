@@ -22,8 +22,8 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 		}
 	});
 
-	//Left indent & levels
-	if (group.el[0].att.lindent > 0) {
+	//Left indent & levels for ONLY block text
+	if (group.el[0].att.lindent > 0 && !group.el[0].att.tbsa) {
 		if (group.el[1] !== undefined) {
 			if (group.el[0].att.lindent > group.el[1].att.lindent) {
 				style += `text-indent: ${att.lindent - group.el[1].att.lindent}pt;`;
@@ -38,6 +38,8 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 				style += `padding-left: ${att.lindent}pt;`;
 			} else if (group.att.style === "sum2") {
 				style += `text-indent: ${att.lindent}pt;`;
+			} else if (group.el[0].att.last && group.el[0].att.first) {
+				style += `padding-left: ${att.lindent}pt;`;
 			}
 		}
 	}
@@ -318,6 +320,28 @@ module.exports.hasCalHang = col => {
 	});
 
 	return false;
+};
+
+module.exports.hasBreakMacro = line => {
+	let hasBreak = false;
+
+	line.el.forEach((t, tIndex) => {
+		if (t.name === "t" && t.el !== undefined) {
+			t.el.forEach((el, elIndex) => {
+				if (el.type === "instruction") {
+					if (el.ins === "qa" || el.ins === "l") {
+						return (hasBreak = true);
+					}
+				}
+			});
+		} else {
+			if (t.type === "instruction") {
+				if (t.ins === "qa" || t.ins === "l") return (hasBreak = true);
+			}
+		}
+	});
+
+	return hasBreak;
 };
 
 module.exports.handleInstructions = el => {

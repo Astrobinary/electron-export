@@ -48,10 +48,14 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 					text += `<img style="width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});
+
+		if (line.att.quadset && !style.hasBreakMacro(line) && !line.att.last) {
+			if (group.el[lineIndex + 1] !== undefined) if (group.el[lineIndex + 1].att.yfinal !== line.att.yfinal) text += `<br/>`;
+		}
 	});
 
 	let tempText = text.replace(/<[^>]*>/gm, "").replace(/\s+/gm, "");
-	if (tempText.toUpperCase().includes("TABLEOFCONTENTS")) {
+	if (tempText.toUpperCase().includes("TABLEOFCONTENTS") && !group.att.style.includes("para")) {
 		text = `<a name="_toc"></a>${text}`;
 	}
 
@@ -163,8 +167,6 @@ const parseBlockText = (rootStyle, block, group, groupStyle, line, lineIndex, t,
 			if (el.type === "instruction") {
 				const ins = style.handleInstructions(el);
 				if (ins !== null) text += ins;
-			} else if (line.att.bmline && el.txt === " ") {
-				text = `<br><br>`;
 			} else {
 				//Adds usb to text
 				if (elIndex > 1) {

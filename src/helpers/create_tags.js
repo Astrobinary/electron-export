@@ -34,7 +34,7 @@ Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, optio
 });
 
 const createHangTag = (inlineCSS, tag, options) => {
-	const tableStart = `<table class="${tag}" cellpadding="0" cellspacing="0" width="100%" ">`;
+	const tableStart = `<table class="${tag}" width="100%" style="border-collapse: collapse;">`;
 	const tableEnd = `<tr style="vertical-align: top;">${options.fn(this)}</tr></table>`;
 
 	const table = tableStart + tableEnd;

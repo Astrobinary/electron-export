@@ -84,7 +84,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							if (col.att.col !== "1") divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						} else {
 							if (col.att.col !== "1") divStyle.push(`padding-right: ${colspec.att.tbcrgut}pt;`);
-							if (col.att.col !== "1" && !isNumber) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+							if (col.att.col !== "1" && !isNumber && line.att.qdtype !== "left") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
 						}
 					}
 				} else {
@@ -95,16 +95,19 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				if (!isLast && line.att.last) divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut) / 2}pt;`);
 			}
 
-			//Handles indent
-			if (line.att.lindent > 0 && line.att.first && line.att.last) {
-				divStyle.push(`padding-left: ${group.el[0].att.lindent}pt;`);
-			}
-
-			//Handles 2nd line indent
-			if (group.el.length > 1)
+			//Handles table indents
+			if (group.el.length > 1) {
 				if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
-					if (line.att.last) divStyle.push(`margin-left: ${group.el[0].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
+					let lineNum = 0;
+					let diff = parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal);
+					if (group.el[0].att.lindent === "0" && diff == 0) lineNum = 1;
+					if (line.att.last) divStyle.push(`margin-left: ${parseInt(group.el[lineNum].att.lindent) + diff}pt; text-indent: -${diff}pt;`);
 				}
+			} else {
+				if (line.att.lindent > 0 && line.att.first && line.att.last) {
+					divStyle.push(`padding-left: ${group.el[0].att.lindent}pt;`);
+				}
+			}
 
 			line.el.forEach((t, tIndex) => {
 				if (t.type === "instruction") {
@@ -120,6 +123,17 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
 						} else {
 							divStyle.push(`padding-left: ${t.att.x}pt;`);
+						}
+					} else {
+						if (parseFloat(t.att.x) < 0) {
+							let newStyle = divStyle.map(item => {
+								if (item.includes("margin-left")) {
+									const amt = item.replace(/[^0-9,.]/g, "");
+									return `margin-left: ${parseFloat(amt - parseFloat(Math.abs(t.att.x)))}pt;`;
+								}
+								return item;
+							});
+							divStyle = newStyle;
 						}
 					}
 				}
@@ -145,7 +159,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							}
 
 							//Offset % when hangs off table
-							if (isNumber && el.txt.includes("%")) divStyle.push(`margin-right: 2.5ch;`);
+							// if (isNumber && el.txt.includes("%")) divStyle.push(`margin-right: 2.5ch;`);
 
 							//Adds USB
 							if (elIndex > 1) {
