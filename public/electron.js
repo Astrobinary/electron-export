@@ -48,9 +48,9 @@ const createWindow = () => {
 		if (error) throw error;
 
 		if (Object.keys(data).length === 0) {
-			storage.set("config", { edgarShade: true, tocHeader: true, marked: false }, function(error) {
-				if (error) throw error;
-			});
+			// storage.set("config", { edgarShade: true, tocHeader: true, marked: false }, function(error) {
+			// 	if (error) throw error;
+			// });
 
 			global.edgarShade = true;
 			global.tocHeader = true;
@@ -67,7 +67,8 @@ const createWindow = () => {
 
 // CLS_Genfin/GRP_house/JOB_nt10002728x1_424b5-FILED
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_House/JOB_s002392x7_s1-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Funds/GRP_Broadridge/JOB_nc10002154x1_def14a-FILED" : process.argv[1];
+	// let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Training/GRP_Brandon/JOB_HTML_EXPORT" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);

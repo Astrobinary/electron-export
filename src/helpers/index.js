@@ -49,10 +49,10 @@ exports.toRGB = cmyk => {
 	const CMYK = cmyk.split(" ");
 	let result = [];
 
-	const c = CMYK[0];
-	const m = CMYK[1];
-	const y = CMYK[2];
-	const k = CMYK[3];
+	const c = parseFloat(CMYK[0]);
+	const m = parseFloat(CMYK[1]);
+	const y = parseFloat(CMYK[2]);
+	const k = parseFloat(CMYK[3]);
 
 	result.push(1 - Math.min(1, c * (1 - k) + k));
 	result.push(1 - Math.min(1, m * (1 - k) + k));
@@ -62,5 +62,5 @@ exports.toRGB = cmyk => {
 	result[1] = Math.round(result[1] * 255);
 	result[2] = Math.round(result[2] * 255);
 
-	return `rgb(${result[0]}, ${result[1]}, ${result[2]});`;
+	return `rgb(${result[0]}, ${result[1]}, ${result[2]})`;
 };

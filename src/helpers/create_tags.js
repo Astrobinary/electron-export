@@ -20,7 +20,7 @@ Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, optio
 
 	//Checks if current group is a table
 	if (group.name === "table") {
-		blockTag = createTable(block, options.data._parent.index, group, group.el[0], options);
+		blockTag = createTable(block, options.data._parent.index, group, gindex, group.el[0], options);
 		return new Handlebars.SafeString(blockTag);
 	}
 
@@ -42,13 +42,15 @@ const createHangTag = (inlineCSS, tag, options) => {
 	return table;
 };
 
-const createTable = (block, blockIndex, frame, tgroup, options) => {
+const createTable = (block, blockIndex, frame, gIndex, tgroup, options) => {
 	let margin = "";
 	let border = "";
 	let hasInsert = false;
 	let table = "";
 
 	if (remote.getGlobal("marked")) hasInsert = findTraceInTable(tgroup);
+
+	margin += `margin: auto;`;
 
 	if (frame.att.frame !== "none") {
 		if (frame.att.topbox) border += `border-top: ${frame.att.topbox}pt solid ${frame.att.btcolor};`;
@@ -57,11 +59,18 @@ const createTable = (block, blockIndex, frame, tgroup, options) => {
 		if (frame.att.rsidbox) border += `border-right: ${frame.att.rsidbox}pt solid ${frame.att.brcolor};`;
 	}
 
+	//Calculates top margin based on prev group
+	margin += findTopMargin(block, tgroup, gIndex);
+
 	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt; `;
-	margin += `margin-top: 6pt;`;
 
 	//Added +5 workaroudn for adding +5 padding to last column
-	table = `<table class="${tgroup.att.tgroupstyle}" style="width: ${parseFloat(tgroup.att.tbwidth) + 6}pt; ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
+
+	let width = `width: 100%;`;
+
+	if (tgroup.att.tbxposn > 0) width = `width: calc(100% - ${parseInt(tgroup.att.tbxposn)}pt);`;
+
+	table = `<table class="${tgroup.att.tgroupstyle}" style="${width} ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
 
 	if (hasInsert) table = `<R>${table}</R>`;
 
@@ -93,4 +102,26 @@ const findTraceInTable = tgroup => {
 	});
 
 	return hasInsert;
+};
+
+const findTopMargin = (block, tgroup, gIndex) => {
+	let last = "";
+	let yfinal = 0;
+	let marginTop = 0;
+	if (gIndex > 0) {
+		last = block.el[gIndex - 1].el[block.el[gIndex - 1].el.length - 1].att;
+		if (last.yfinal === undefined) {
+			yfinal = parseFloat(last.tbdepth) + parseFloat(last.tbyposn);
+		} else {
+			yfinal = parseFloat(last.yfinal);
+		}
+	}
+
+	if (parseFloat(tgroup.att.tbyposn) - yfinal === 0) {
+		marginTop = 10;
+	} else {
+		marginTop = parseFloat(tgroup.att.tbyposn) - yfinal;
+	}
+
+	return `margin-top: ${marginTop}pt;`;
 };

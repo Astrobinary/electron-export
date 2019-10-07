@@ -17,7 +17,7 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 ## HTML TODO:
 
 #### Bugs
-- Rules don't appear at times
+- Rules don't appear at times (nt10002006x1_424b5-FILED)
 
 
 #### Text

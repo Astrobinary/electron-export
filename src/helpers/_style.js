@@ -7,11 +7,13 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 	let style = "";
 	let rootatt;
 
+	if (lineIndex === undefined) lineIndex = 0;
+
 	if (group.hasOwnProperty("el")) {
-		if (group.el[1] !== undefined) {
-			group.el[0].att.bmline ? (att = group.el[1].att) : (att = group.el[0].att);
+		if (group.el[lineIndex + 1] !== undefined) {
+			group.el[lineIndex].att.bmline ? (att = group.el[lineIndex + 1].att) : (att = group.el[lineIndex].att);
 		} else {
-			att = group.el[0].att;
+			att = group.el[lineIndex].att;
 		}
 	}
 
@@ -23,30 +25,26 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 	});
 
 	//Left indent & levels for ONLY block text
-	if (group.el[0].att.lindent > 0 && !group.el[0].att.tbsa) {
-		if (group.el[1] !== undefined) {
-			if (group.el[0].att.lindent > group.el[1].att.lindent) {
+	if (group.el[lineIndex].att.lindent > 0 && !group.el[lineIndex].att.tbsa && !help.hasHang(group.el)) {
+		if (group.el[lineIndex + 1] !== undefined) {
+			if (group.el[lineIndex].att.lindent > group.el[lineIndex + 1].att.lindent) {
 				style += `text-indent: ${att.lindent - group.el[1].att.lindent}pt;`;
-				if (group.el[1].att.lindent > 0) style += `padding-left: ${group.el[1].att.lindent}pt;`;
+				if (group.el[lineIndex + 1].att.lindent > lineIndex) style += `padding-left: ${group.el[lineIndex + 1].att.lindent}pt;`;
 			} else {
-				if (!help.hasHang(group.el)) {
-					style += `padding-left: ${att.lindent}pt;`;
-				}
+				style += `padding-left: ${att.lindent}pt;`;
 			}
 		} else {
 			if (group.att.class === "foots") {
 				style += `padding-left: ${att.lindent}pt;`;
 			} else if (group.att.style === "sum2") {
 				style += `text-indent: ${att.lindent}pt;`;
-			} else if (group.el[0].att.last && group.el[0].att.first) {
+			} else if (group.el[lineIndex].att.last && group.el[lineIndex].att.first) {
 				style += `padding-left: ${att.lindent}pt;`;
 			}
 		}
 	}
 
-	if (group.el[0].att.rindent > 0) {
-		style += `padding-right: ${att.rindent}pt;`;
-	}
+	if (group.el[0].att.rindent > 0) style += `padding-right: ${att.rindent}pt;`;
 
 	//Right indent
 	style += `text-align: ${att.qdtype}; `;
@@ -65,7 +63,11 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 		if (parseFloat(att.prelead) < 0) {
 			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 		} else {
-			style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+			if (parseFloat(att.prelead) === 0) {
+				if (gindex === 0 && lineIndex === 0 && !att.tbsa) style += `padding-top: ${parseFloat(att.yfinal)}pt;`;
+			} else {
+				style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+			}
 		}
 	}
 
@@ -104,7 +106,11 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 			}
 		}
 
-		style += `font-size: ${rootatt.size}pt; ${lineHeight} font-family: ${fontFamily};`;
+		let fontSize = "";
+
+		if (parseInt(rootatt.size) > 1) fontSize = `font-size: ${rootatt.size}pt;`;
+
+		style += `${fontSize} ${lineHeight} font-family: ${fontFamily};`;
 	}
 
 	return style.trim();
@@ -116,7 +122,8 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	let styleWrap = "";
 
 	//Dont style empty text...
-	if (!/\S/.test(text)) return text;
+	if (!/\S/.test(text) && !t.att.ul1) return text;
+
 	text = text.replace(/</gm, "&lt;");
 	text = text.replace(/>/gm, "&gt;");
 
@@ -136,15 +143,14 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	});
 
 	//Checks for different color
-	if (att.color !== "#000000") {
-		styles += `color: ${att.color};`;
-	}
+	if (att.color !== "#000000") styles += `color: ${att.color};`;
+
 	//Adds bg color to text
 	if (att.hasOwnProperty("background-color")) styles += `background-color: ${att["background-color"]};`;
 
 	//Checks for different size
 	if (att.size !== groupATT.size) {
-		styles += `font-size: ${att.size}pt;`;
+		if (parseInt(att.size) > 1) styles += `font-size: ${att.size}pt; line-height: ${parseFloat(att.size) + parseFloat(line.att.ldextra)}pt;`;
 	}
 
 	//If broken with a <qa> and alignment is different; has to be last T in an line element
@@ -222,6 +228,8 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows)) {
 			if (tgroup.att.tgroupstyle === "fintab" && tgroup.att.cols === col.att.col) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 
+			if (isLast) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
+
 			if (col.att.namest !== undefined) {
 				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
 					rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
@@ -232,21 +240,18 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 		}
 	}
 
-	if (isLast && tgroup.att.tgroupstyle === "fintab" && this.hasCalHang(col)) {
-		rowStyle.push(`padding-right: 2ch;`);
-	} else if (isLast && tgroup.att.tgroupstyle === "fintab") {
-		rowStyle.push(`padding-right: 0.5ch;`);
-	}
-
 	//Cell text size
-	rowStyle.push(`font-size: ${rootAtt.size}pt;`);
+	if (parseInt(rootAtt.size) > 1) rowStyle.push(`font-size: ${rootAtt.size}pt;`);
 
 	//Cell line height
 	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
 
 	//Cell width
-	rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${parseFloat(colspec.att.colwidth)}pt;`);
-	if (col.att.col === "1") {
+
+	if (isLast || col.att.nameend) {
+		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
+	} else {
+		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${colspec.att.colwidth}pt;`);
 	}
 
 	//Row gutter
@@ -261,18 +266,23 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
 			}
 		}
-
-		// if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt; padding-bottom: ${parseInt(row.att.row_gutter) / 2}pt`);
 	} else {
 		if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
 	}
 
+	let shading = this.getShading(col);
+
+	if (shading !== undefined) rowStyle.push(`background-color: ${help.toRGB(shading)};`);
+
 	//Cell Hrule
+	if (row.att.rthk === undefined) row.att.rthk = 1;
+	if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
 	if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
+	if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
 
-	let shading = getShading(col);
+	//Vrule
+	if (parseFloat(colspec.att.tbcrrule) > 0) rowStyle.push(`border-right: 1pt solid ${help.toRGB(colspec.att["tbcr_rcolor-cmyk"])};`);
 
-	if (shading !== undefined) rowStyle.push(`background-color: ${shading};`);
 	return rowStyle.join(" ");
 };
 
@@ -284,7 +294,7 @@ module.exports.isLastColumn = (tgroup, col) => {
 	return false;
 };
 
-const getShading = col => {
+module.exports.getShading = col => {
 	let shadeColor;
 
 	col.el.forEach((group, groupIndex) => {
@@ -292,7 +302,7 @@ const getShading = col => {
 			if (line.el === undefined) return;
 			line.el.forEach((t, tIndex) => {
 				if (t.name === "shape") {
-					shadeColor = t.att.color;
+					shadeColor = t.att["color-cmyk"];
 					return shadeColor;
 				}
 			});
@@ -300,6 +310,21 @@ const getShading = col => {
 	});
 
 	return shadeColor;
+};
+
+const getMaxWidth = col => {
+	let max = 0;
+
+	col.el.forEach(group => {
+		let maxWidth = 0;
+		group.el.forEach(line => {
+			let currentWidth = 0;
+			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth);
+			maxWidth = Math.max(maxWidth, currentWidth);
+		});
+		return (max = maxWidth);
+	});
+	return max;
 };
 
 module.exports.hasCalHang = col => {
@@ -329,14 +354,14 @@ module.exports.hasBreakMacro = line => {
 		if (t.name === "t" && t.el !== undefined) {
 			t.el.forEach((el, elIndex) => {
 				if (el.type === "instruction") {
-					if (el.ins === "qa" || el.ins === "l") {
-						return (hasBreak = true);
-					}
+					if (el.ins === "qa" || el.ins === "l") hasBreak = true;
+					return hasBreak;
 				}
 			});
 		} else {
 			if (t.type === "instruction") {
-				if (t.ins === "qa" || t.ins === "l") return (hasBreak = true);
+				if (t.ins === "qa" || t.ins === "l") hasBreak = true;
+				return hasBreak;
 			}
 		}
 	});

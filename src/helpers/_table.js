@@ -1,10 +1,11 @@
 const style = require("./_style");
 const { remote } = require("electron");
+const help = require("./index");
 const cmd = require("node-cmd");
 
 module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
-	const colspec = colspecs[col.att.col - 1];
 	let colspan = "";
+	const colspec = colspecs[col.att.col - 1];
 
 	if (col.att.namest !== undefined) {
 		let end = col.att.nameend.slice(3);
@@ -25,6 +26,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 
 	let text = "";
 	let divStyle = [];
+	let shading = style.getShading(col);
 
 	col.el.forEach((group, groupIndex) => {
 		let maxWidth = 0;
@@ -34,10 +36,19 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 		group.el.forEach((line, lineIndex) => {
 			if (line.el === undefined) return;
 
+			if (row.att.rthk === undefined) row.att.rthk = 1;
+			if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) {
+				row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
+			} else if (row.att["rcolor-cmyk"] === undefined && shading === undefined) {
+				row.att["rcolor-cmyk"] = `1 1 1 1`;
+			}
+
 			//Basic rules TODO: implement width/color
-			if (line.att.last) {
-				if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: 1pt solid;`); //urule
-				if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: 1pt solid;`); //trule
+			if (line.att.last || line.att.nobkpt) {
+				if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //urule
+				if (col.att.rule_info === "2 0 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //urule
+				if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //trule
+				if (col.att.rule_info === "2 2 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //trule
 				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double;`); // double trule
 			}
 
@@ -48,7 +59,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 
 			//Gets max width per each line
 			let currentWidth = 0;
-			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth) - 4.25;
+			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth);
 			maxWidth = Math.max(maxWidth, currentWidth);
 
 			let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
@@ -58,18 +69,19 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
 
 				//Add widths to certian columns
-				if (col.att.col === "1" && line.att.last && line.att.qdtype !== "center" && maxWidth !== 0) {
-					divStyle.push(`width: ${maxWidth}pt;`);
-				} else if (isNumber && line.att.first && line.att.last && line.att.qdtype === "center") {
-					divStyle.push(`width: ${line.att.lnwidth}pt;`);
-				} else if (isNumber && isLast && line.att.lnwidth > 0) {
-					if (line.att.lnwidth < 10) {
-						divStyle.push(`max-width: ${colspec.att.colwidth}pt;`);
-					} else {
-						divStyle.push(`max-width: ${line.att.lnwidth}pt;`);
-					}
-				}
+				// if (col.att.col === "1" && line.att.last && line.att.qdtype !== "center" && maxWidth !== 0) {
+				// 	divStyle.push(`width: ${maxWidth}pt;`);
+				// } else if (isNumber && line.att.first && line.att.last && line.att.qdtype === "center") {
+				// 	divStyle.push(`width: ${line.att.lnwidth}pt;`);
+				// } else if (isNumber && isLast && line.att.lnwidth > 0) {
+				// 	if (line.att.lnwidth < 10) {
+				// 		divStyle.push(`max-width: ${colspec.att.colwidth}pt;`);
+				// 	} else {
+				// 		divStyle.push(`max-width: ${line.att.lnwidth}pt;`);
+				// 	}
+				// }
 
+				//Add margins to certian columns
 				if (line.att.qdtype !== "center" && line.att.last) {
 					if (leftSpace !== 0 && isNumber) {
 						if (leftSpace > parseInt(colspec.att.tbclwsp) / 2) {
@@ -83,14 +95,27 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 							if (col.att.col !== "1") divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						} else {
-							if (col.att.col !== "1") divStyle.push(`padding-right: ${colspec.att.tbcrgut}pt;`);
+							if (col.att.col !== "1" && line.att.last) divStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
 							if (col.att.col !== "1" && !isNumber && line.att.qdtype !== "left") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
+							divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						}
 					}
 				} else {
-					if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`padding-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
+					if ((col.att.col === "1" || col.att.namest === "col1") && !isLast) {
+						let hasRight = divStyle.some(item => {
+							return item.includes("margin-right");
+						});
+
+						if (!hasRight && line.att.last) {
+							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+							// divStyle.push(`padding-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
+						}
+					} else if (line.att.last && isLast) {
+						divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+					}
 				}
 			} else {
+				//Table headers
 				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`); //Apply style to header column 1
 				if (!isLast && line.att.last) divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut) / 2}pt;`);
 			}
@@ -100,7 +125,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
 					let lineNum = 0;
 					let diff = parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal);
-					if (group.el[0].att.lindent === "0" && diff == 0) lineNum = 1;
+					if (group.el[0].att.lindent === "0" && diff === 0) lineNum = 1;
 					if (line.att.last) divStyle.push(`margin-left: ${parseInt(group.el[lineNum].att.lindent) + diff}pt; text-indent: -${diff}pt;`);
 				}
 			} else {
@@ -116,8 +141,8 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				} else {
 					if (parseFloat(t.att.x) > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
-						divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
-					} else if (t.att.x > 0 && text.length < 1) {
+						if (isNumber) divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
+					} else if (t.att.x > 0 && text.length < 1 && t.name !== "shape") {
 						const offSet = tXpos(line, t, tIndex);
 						if (tIndex > 1) {
 							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
@@ -127,9 +152,10 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					} else {
 						if (parseFloat(t.att.x) < 0) {
 							let newStyle = divStyle.map(item => {
-								if (item.includes("margin-left")) {
+								if (item.includes("margin-left") && !isNumber && line.att.qdtype !== "center") {
 									const amt = item.replace(/[^0-9,.]/g, "");
-									return `margin-left: ${parseFloat(amt - parseFloat(Math.abs(t.att.x)))}pt;`;
+
+									return `margin-left: ${parseFloat(amt - parseFloat(Math.abs(t.att.x)) + parseFloat(colspec.att.tbclwsp))}pt;`;
 								}
 								return item;
 							});
@@ -139,6 +165,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				}
 
 				if (t.name === "t" && t.el !== undefined) {
+					if (t.att.suppress) return;
 					t.el.forEach((el, elIndex) => {
 						if (el.type === "instruction") {
 							const ins = style.handleInstructions(el);
@@ -157,10 +184,6 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
 								el.txt = el.txt.replace(/ +?/g, "");
 							}
-
-							//Offset % when hangs off table
-							// if (isNumber && el.txt.includes("%")) divStyle.push(`margin-right: 2.5ch;`);
-
 							//Adds USB
 							if (elIndex > 1) {
 								if (t.el[elIndex - 1].name === "xpp") {
@@ -174,7 +197,9 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							text += style.wrapBlockText(el.txt, t.att.style, rootStyle, group, line, group.att.style, t, tIndex, lineIndex, elIndex);
 
 							//Add line break to generated text that does not have instructions
-							if (line.att.quadset && t.att.cgt) text += `<br/>`;
+							if (line.att.quadset && !style.hasBreakMacro(line) && !line.att.last) {
+								if (group.el[lineIndex + 1] !== undefined) if (group.el[lineIndex + 1].att.yfinal !== line.att.yfinal) text += `<br/>`;
+							}
 						}
 					});
 				}

@@ -117,7 +117,7 @@ const template = Handlebars.compile(`
 							{{#each this.el}} {{!-- Each group --}}
 								
 								{{~#create_tags @root.el.0.el.1.el ../this this @index ~}}
-									{{~ display_text @root.el.0.el.1.el ../../this ../this ~}}
+									{{~ display_text @root.el.0.el.1.el ../../../../this ../../this ../this ~}}
 								{{/create_tags}}
 
 							{{/each}}
