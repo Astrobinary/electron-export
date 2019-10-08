@@ -227,13 +227,13 @@ const handleBlockRules = (rootStyle, block, group, line, t, tIndex) => {
 
 	if (parseInt(line.att.xfinal) > 10 && line.att.qdtype === "left") {
 		display = `block`;
-		margin_left = `margin-left: ${line.att.xfinal}pt;`;
+		margin_left = `margin-left: ${parseFloat(line.att.xfinal) - parseFloat(line.att.lindent)}pt;`;
 	}
 
 	if (block.att.type === "main")
 		rootStyle.forEach(element => {
 			if (element.att.name === group.att.style) {
-				margin_bot = `margin-bottom: -${parseFloat(element.att.size) + parseFloat(t.att.y)}pt;`;
+				// margin_bot = `margin-bottom: -${parseFloat(element.att.size) + parseFloat(t.att.y)}pt;`;
 				return;
 			}
 		});

@@ -5,7 +5,9 @@ const cmd = require("node-cmd");
 
 module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
 	let colspan = "";
+	let colspecSpan = "";
 	const colspec = colspecs[col.att.col - 1];
+
 
 	if (col.att.namest !== undefined) {
 		let end = col.att.nameend.slice(3);
@@ -13,10 +15,16 @@ module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex
 		colspan = `colspan="${parseInt(end) - parseInt(start) + 1}"`;
 	}
 
+	if(colspan !== ""){
+		colspecSpan = colspecs[col.att.nameend.slice(3) - 1];
+	}
+
+
+
 	let rowspan = "";
 	if (col.att.morerows !== undefined) colspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 
-	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
+	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
 };
 
 const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
@@ -43,13 +51,14 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				row.att["rcolor-cmyk"] = `1 1 1 1`;
 			}
 
-			//Basic rules TODO: implement width/color
 			if (line.att.last || line.att.nobkpt) {
+				if (row.att.rthk === "0.5") row.att.rthk = 1;
 				if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //urule
-				if (col.att.rule_info === "2 0 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //urule
 				if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //trule
+				if (col.att.rule_info === "2 0 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //urule
 				if (col.att.rule_info === "2 2 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //trule
-				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double;`); // double trule
+				if (col.att.rule_info === "3 0 0") divStyle.push(`border-bottom: 3pt double ${help.toRGB(row.att["rcolor-cmyk"])};`); // double trule
+				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double ${help.toRGB(row.att["rcolor-cmyk"])};`); // double trule
 			}
 
 			//Stop financial numbers from wrapping
@@ -68,7 +77,6 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				//If fin number is on its own line, add line measure difference to the right
 				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
 
-				//Add widths to certian columns
 				// if (col.att.col === "1" && line.att.last && line.att.qdtype !== "center" && maxWidth !== 0) {
 				// 	divStyle.push(`width: ${maxWidth}pt;`);
 				// } else if (isNumber && line.att.first && line.att.last && line.att.qdtype === "center") {
@@ -139,9 +147,34 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					const ins = style.handleInstructions(t);
 					if (ins !== null) text += ins;
 				} else {
+					//Add widths to certian columns
+					if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows) && line.att.last && isNumber) {
+						if (isNumber && parseInt(colspec.att.tbmxalnw) > 0 && parseFloat(t.att.x) > 0) {
+							let temp = parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x);
+							let wid = style.getValueMinMax(divStyle, "width:", temp.toFixed(2), false);
+							if (wid !== undefined && wid > 0) divStyle.push(`width: ${wid}pt;`);
+						} else {
+							
+
+							
+
+
+							if (parseInt(line.att.lnwidth) < parseInt(colspec.att.tbmxalnw)) {
+								
+
+								divStyle.push(`max-width: ${style.getValueMinMax(divStyle, "max-width:", parseFloat(colspec.att.tbmxalnw), true)}pt;`);
+							} else {
+
+								divStyle.push(`max-width: ${style.getValueMinMax(divStyle, "max-width:", parseFloat(line.att.lnwidth), true)}pt;`);
+
+								
+							}
+						}
+					}
+
 					if (parseFloat(t.att.x) > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
-						if (isNumber) divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
+						if (isNumber) divStyle.push(`max-width: ${(parseFloat(line.att.lnwidth) + parseFloat(t.att.x)).toFixed(2)}pt;`);
 					} else if (t.att.x > 0 && text.length < 1 && t.name !== "shape") {
 						const offSet = tXpos(line, t, tIndex);
 						if (tIndex > 1) {

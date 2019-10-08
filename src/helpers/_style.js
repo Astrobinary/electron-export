@@ -206,7 +206,7 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 };
 
 //Style related to table rows (TD)
-module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
+module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) => {
 	const styleClass = col.el[0].att.style;
 	const firstLine = col.el[0].el[0];
 	const isLast = this.isLastColumn(tgroup, col);
@@ -247,7 +247,6 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
 
 	//Cell width
-
 	if (isLast || col.att.nameend) {
 		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
 	} else {
@@ -281,7 +280,16 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec) => {
 	if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
 
 	//Vrule
-	if (parseFloat(colspec.att.tbcrrule) > 0) rowStyle.push(`border-right: 1pt solid ${help.toRGB(colspec.att["tbcr_rcolor-cmyk"])};`);
+	if (parseFloat(colspec.att.tbcrrule) > 0 && !this.hasXvrule(col) ) {
+		if (colspec.att.tbcrrule === "0.5") colspec.att.tbcrrule = 1;
+		rowStyle.push(`border-right: ${colspec.att.tbcrrule}pt solid ${help.toRGB(colspec.att["tbcr_rcolor-cmyk"])};`);
+	} else if(colspecSpan !== "" ){
+		if(parseFloat(colspecSpan.att.tbcrrule) > 0 && !this.hasXvrule(col) ){
+			if (colspecSpan.att.tbcrrule === "0.5") colspecSpan.att.tbcrrule = 1;
+		rowStyle.push(`border-right: ${colspecSpan.att.tbcrrule}pt solid ${help.toRGB(colspecSpan.att["tbcr_rcolor-cmyk"])};`);
+		}
+	}
+
 
 	return rowStyle.join(" ");
 };
@@ -369,6 +377,56 @@ module.exports.hasBreakMacro = line => {
 	return hasBreak;
 };
 
+module.exports.hasXvrule = col => {
+	let hasVrule = false;
+
+	col.el.forEach((group, tIndex) => {
+		group.el.forEach((line, tIndex) => {
+			line.el.forEach((t, tIndex) => {
+				if (t.name === "t" && t.el !== undefined) {
+					t.el.forEach((el, elIndex) => {
+						if (el.type === "instruction") {
+							if (el.ins === "xvrule") hasVrule = true;
+							return hasVrule;
+						}
+					});
+				} else {
+					if (t.type === "instruction") {
+						if (t.ins === "xvrule") hasVrule = true;
+						return hasVrule;
+					}
+				}
+			});
+		});
+	});
+
+	return hasVrule;
+};
+
+module.exports.getValueMinMax = (arr, target, current, higher) => {
+	let prev;
+
+	arr.forEach(item => {
+		if (item.includes(target)) {
+			prev = item.slice(target.length, -3);
+			if (!isNaN(prev))
+			if(higher){
+				if (parseFloat(current) > parseFloat(prev)) {
+					return current;
+				}
+			}else{
+				if (parseFloat(current) < parseFloat(prev)) {
+					return current;
+				}
+			}
+				
+		}
+	});
+
+	if (current === undefined) return 99;
+	if (prev === undefined) return current;
+};
+
 module.exports.handleInstructions = el => {
 	if (el.ins === "qa") return `<br/>`;
 	if (el.ins === "l") return `<br/>`;
@@ -379,6 +437,12 @@ module.exports.handleInstructions = el => {
 	if (el.ins === "/link") return `</a>`;
 	if (el.ins === "sup") return `<sup style="line-height: 0;">`;
 	if (el.ins === "reset") return `</sup>`;
+
+	// "ins": "ru;%bsx;4q"
+	if (el.ins.includes("ru;")) {
+		const params = el.ins.split(";");
+		return `<div style="border-bottom: ${params[2].replace(/\D+/gm, "")}pt solid black;">&nbsp;</div>`;
+	}
 
 	if (el.ins.includes("rx;")) return `<a name="${el.ins.slice(3)}"></a>`;
 

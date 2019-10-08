@@ -76,7 +76,7 @@ const createSumbox = el => {
 		ruleAtt.w = "1";
 	}
 
-	if (ruleAtt.w === undefined) ruleAtt.w = 1;
+	if (ruleAtt.w === undefined) ruleAtt.w = ruleAtt["outline-size"];
 
 	return `border: ${ruleAtt.w}pt ${ruleStyle} ${ruleAtt.color}; ${padding}`;
 };
