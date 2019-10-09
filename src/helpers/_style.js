@@ -47,7 +47,7 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 	if (group.el[0].att.rindent > 0) style += `padding-right: ${att.rindent}pt;`;
 
 	//Right indent
-	style += `text-align: ${att.qdtype}; `;
+	style += `text-align: ${att.qdtype};`;
 
 	//Add margin if not first block in group (used for pc2)
 	// if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
@@ -174,10 +174,6 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 		styles += `font-variant: small-caps;`;
 	}
 
-	//Handles bullets
-	if (text === "󰄝") text = `&#8226;`; //Bullet to html??
-	if (text === "□") text = `&#9744;`; //ebox to html??
-
 	//Handles underlines
 	if (t.att.ul1) text = `<u>${text}</u>`;
 
@@ -280,16 +276,15 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colsp
 	if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
 
 	//Vrule
-	if (parseFloat(colspec.att.tbcrrule) > 0 && !this.hasXvrule(col) ) {
+	if (parseFloat(colspec.att.tbcrrule) > 0 && !this.hasXvrule(col)) {
 		if (colspec.att.tbcrrule === "0.5") colspec.att.tbcrrule = 1;
 		rowStyle.push(`border-right: ${colspec.att.tbcrrule}pt solid ${help.toRGB(colspec.att["tbcr_rcolor-cmyk"])};`);
-	} else if(colspecSpan !== "" ){
-		if(parseFloat(colspecSpan.att.tbcrrule) > 0 && !this.hasXvrule(col) ){
+	} else if (colspecSpan !== "") {
+		if (parseFloat(colspecSpan.att.tbcrrule) > 0 && !this.hasXvrule(col)) {
 			if (colspecSpan.att.tbcrrule === "0.5") colspecSpan.att.tbcrrule = 1;
-		rowStyle.push(`border-right: ${colspecSpan.att.tbcrrule}pt solid ${help.toRGB(colspecSpan.att["tbcr_rcolor-cmyk"])};`);
+			rowStyle.push(`border-right: ${colspecSpan.att.tbcrrule}pt solid ${help.toRGB(colspecSpan.att["tbcr_rcolor-cmyk"])};`);
 		}
 	}
-
 
 	return rowStyle.join(" ");
 };
@@ -403,28 +398,39 @@ module.exports.hasXvrule = col => {
 	return hasVrule;
 };
 
+module.exports.hasStyleProperty = (arr, target) => {
+	let has = false;
+
+	arr.forEach(style => {
+		const key = style.split(":")[0];
+		if (key === target) has = true;
+	});
+
+	return has;
+};
+
 module.exports.getValueMinMax = (arr, target, current, higher) => {
 	let prev;
 
 	arr.forEach(item => {
 		if (item.includes(target)) {
-			prev = item.slice(target.length, -3);
-			if (!isNaN(prev))
-			if(higher){
-				if (parseFloat(current) > parseFloat(prev)) {
-					return current;
-				}
-			}else{
-				if (parseFloat(current) < parseFloat(prev)) {
-					return current;
-				}
+			console.log("here");
+			prev = item.split(":")[1];
+
+			// prev = parseFloat(item.slice(target.length + 1, -3));
+
+			if (parseFloat(current) < parseFloat(prev)) {
+				return current;
+			} else {
+				return prev;
 			}
-				
+		} else {
+			console.log(current);
+			return current;
 		}
 	});
 
-	if (current === undefined) return 99;
-	if (prev === undefined) return current;
+	return current;
 };
 
 module.exports.handleInstructions = el => {

@@ -8,18 +8,15 @@ module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex
 	let colspecSpan = "";
 	const colspec = colspecs[col.att.col - 1];
 
-
 	if (col.att.namest !== undefined) {
 		let end = col.att.nameend.slice(3);
 		let start = col.att.namest.slice(3);
 		colspan = `colspan="${parseInt(end) - parseInt(start) + 1}"`;
 	}
 
-	if(colspan !== ""){
+	if (colspan !== "") {
 		colspecSpan = colspecs[col.att.nameend.slice(3) - 1];
 	}
-
-
 
 	let rowspan = "";
 	if (col.att.morerows !== undefined) colspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
@@ -37,6 +34,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 	let shading = style.getShading(col);
 
 	col.el.forEach((group, groupIndex) => {
+		const isNotHeaderCell = parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows);
 		let maxWidth = 0;
 
 		inlineCSS = style.inlineCSS(rootStyle, block, group, 0, groupIndex);
@@ -73,7 +71,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 
 			let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
 			//Apply styles to body rows only
-			if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows)) {
+			if (isNotHeaderCell) {
 				//If fin number is on its own line, add line measure difference to the right
 				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
 
@@ -148,33 +146,17 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					if (ins !== null) text += ins;
 				} else {
 					//Add widths to certian columns
-					if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows) && line.att.last && isNumber) {
-						if (isNumber && parseInt(colspec.att.tbmxalnw) > 0 && parseFloat(t.att.x) > 0) {
-							let temp = parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x);
-							let wid = style.getValueMinMax(divStyle, "width:", temp.toFixed(2), false);
-							if (wid !== undefined && wid > 0) divStyle.push(`width: ${wid}pt;`);
-						} else {
-							
-
-							
-
-
-							if (parseInt(line.att.lnwidth) < parseInt(colspec.att.tbmxalnw)) {
-								
-
-								divStyle.push(`max-width: ${style.getValueMinMax(divStyle, "max-width:", parseFloat(colspec.att.tbmxalnw), true)}pt;`);
-							} else {
-
-								divStyle.push(`max-width: ${style.getValueMinMax(divStyle, "max-width:", parseFloat(line.att.lnwidth), true)}pt;`);
-
-								
-							}
+					if (isNotHeaderCell && line.att.last && isNumber && style.hasStyleProperty(divStyle, "max-width") === false) {
+						if (parseFloat(t.att.x) > 0 && t.hasOwnProperty("el")) {
+							divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x)}pt;`);
+						} else if (t.hasOwnProperty("el")) {
+							divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw)}pt;`);
 						}
 					}
 
 					if (parseFloat(t.att.x) > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
-						if (isNumber) divStyle.push(`max-width: ${(parseFloat(line.att.lnwidth) + parseFloat(t.att.x)).toFixed(2)}pt;`);
+						if (isNumber && style.hasStyleProperty(divStyle, "max-width") === false) divStyle.push(`max-width: ${(parseFloat(line.att.lnwidth) + parseFloat(t.att.x)).toFixed(2)}pt;`);
 					} else if (t.att.x > 0 && text.length < 1 && t.name !== "shape") {
 						const offSet = tXpos(line, t, tIndex);
 						if (tIndex > 1) {

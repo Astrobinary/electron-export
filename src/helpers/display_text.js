@@ -263,3 +263,5 @@ const getPickUp = (page, t) => {
 
 	return img;
 };
+
+const repalceHTMLUnicodes = text => {};

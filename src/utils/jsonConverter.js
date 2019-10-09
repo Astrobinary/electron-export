@@ -1,6 +1,7 @@
 import isDev from "electron-is-dev";
 import fs from "fs";
 import convert from "xml-js";
+import convertUnicode from "./htmlUnicode";
 
 const generateJSON = path => {
 	const rawXML = fs.readFileSync(`${path}\\tout.xml`, "utf8");
@@ -20,7 +21,7 @@ const generateJSON = path => {
 		instructionKey: "ins"
 	};
 
-	let results = convert.xml2json(xml, options);
+	let results = convert.xml2json(convertUnicode(xml), options);
 
 	const removeWithComma = /.\{([\s].*?)"type": "text",[\s\S].*"txt": "\\r.*"[\s\S].*\},\n\s*/gm;
 	const removeNoComma = /.\},[\s].*\{([\s].*?)"type": "text",[\s\S].*"txt": "\\r.*"[\s\S].*\}\n\s*/gm;
@@ -28,7 +29,7 @@ const generateJSON = path => {
 	results = results.replace(removeNoComma, "}");
 
 	if (isDev)
-		fs.writeFile(`${path}\\gen.json`, results, "utf8", err => {
+		fs.writeFile(`${path}\\gen.json`, results, "UTF-8", err => {
 			err ? console.log("Error creating file.") : console.log("Json file created");
 		});
 
