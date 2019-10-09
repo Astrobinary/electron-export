@@ -1,4 +1,6 @@
 const Handlebars = require("handlebars");
+const { remote } = require("electron");
+
 exports = Handlebars.registerHelper("gather_blocks", (streams, options) => {
 	let pageBlocks = [];
 	let footnotes = [];
@@ -44,6 +46,8 @@ exports = Handlebars.registerHelper("gather_blocks", (streams, options) => {
 			}
 		}
 	}
+
+	if (remote.getGlobal("tocHeader")) filterdBlocks.unshift({ att: { type: "tocheader" } });
 
 	return options.fn(filterdBlocks);
 });

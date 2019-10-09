@@ -108,7 +108,7 @@ const template = Handlebars.compile(`
    {{#filter_scope this "pages"}} {{!-- Pages element only --}}
 	
 		{{#each this.el}}
-			<div class="page" style="width: {{this.el.[0].el.[0].att.bsx}}pt; text-align: left; margin: auto; position: relative;">
+			<div class="page" style="width: 612pt; text-align: center; margin: auto; position: relative;">
 				{{#gather_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
 					{{#each this}} {{!-- Each block --}}
 
@@ -117,7 +117,7 @@ const template = Handlebars.compile(`
 							{{#each this.el}} {{!-- Each group --}}
 								
 								{{~#create_tags @root.el.0.el.1.el ../this this @index ~}}
-									{{~ display_text @root.el.0.el.1.el ../../this ../this ~}}
+									{{~ display_text @root.el.0.el.1.el ../../../../this ../../this ../this ~}}
 								{{/create_tags}}
 
 							{{/each}}

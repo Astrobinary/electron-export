@@ -6,7 +6,7 @@ const style = require("./_style");
 const table = require("./_table");
 const cmd = require("node-cmd");
 
-Handlebars.registerHelper("display_text", (rootStyle, block, group) => {
+Handlebars.registerHelper("display_text", (rootStyle, page, block, group) => {
 	let text = "";
 
 	if (help.hasHang(group.el)) {
@@ -14,31 +14,35 @@ Handlebars.registerHelper("display_text", (rootStyle, block, group) => {
 	} else if (group.name === "table") {
 		text = tableText(rootStyle, block, group);
 	} else {
-		text = blockText(rootStyle, block, group, group.att.style);
+		text = blockText(rootStyle, page, block, group, group.att.style);
 	}
 
 	return new Handlebars.SafeString(text);
 });
 
-const blockText = (rootStyle, block, group, groupStyle) => {
+const blockText = (rootStyle, page, block, group, groupStyle) => {
 	let text = "";
 
 	group.el.forEach((line, lineIndex) => {
 		if (!line.el && line.att.bmline) {
-			text += `<div style="${style.inlineCSS(rootStyle, block, group)}">&nbsp;</div>`;
+			text += `<div style="${style.inlineCSS(rootStyle, block, group, 0, lineIndex)}">&nbsp;</div>`;
 		}
 
-		if (line.hasOwnProperty("el"))
+		if (line.hasOwnProperty("el")) {
 			line.el.forEach((t, tIndex) => {
 				if (t.name === "t") {
 					if (!t.hasOwnProperty("att")) return;
 					if (t.att.suppress) return;
 					text += parseBlockText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
 				} else if (t.name === "xpp") {
-					const ins = style.handleInstructions(t);
-					if (ins !== null) text += ins;
+					if (t.ins.includes("pick;")) {
+						text += getPickUp(page, t);
+					} else {
+						const ins = style.handleInstructions(t);
+						if (ins !== null) text += ins;
+					}
 				} else if (t.name === "rule") {
-					text += handleBlockRules(line, t);
+					text += handleBlockRules(rootStyle, block, group, line, t, tIndex);
 				} else if (t.name === "image") {
 					const folder = remote.getGlobal("saveLocation");
 					// if (!fs.existsSync(`${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg`)) {
@@ -48,7 +52,21 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 					text += `<img style="width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});
+
+			if (line.att.quadset && !line.att.last) {
+				if (group.el[lineIndex + 1] !== undefined) {
+					if (!style.hasBreakMacro(line)) {
+						if (parseFloat(group.el[lineIndex + 1].att.yfinal) > parseFloat(line.att.yfinal) && group.el[lineIndex + 1].hasOwnProperty("el") && group.el[lineIndex + 1].el.name !== "rule" && !line.att.tbsa) text += `<br/>`;
+					}
+				}
+			}
+		}
 	});
+
+	let tempText = text.replace(/<[^>]*>/gm, "").replace(/\s+/gm, "");
+	if (tempText.toUpperCase().includes("TABLEOFCONTENTS") && !group.att.style.includes("para")) {
+		text = `<a name="_toc"></a>${text}`;
+	}
 
 	return text;
 };
@@ -56,9 +74,15 @@ const blockText = (rootStyle, block, group, groupStyle) => {
 const listText = (rootStyle, block, group, groupStyle) => {
 	let text = "";
 	let hangCharacters = "";
+	let inlineCSS = "";
+	let level = "";
 	let hangAmount = group.el[1].att.lindent - group.el[0].att.lindent;
 
+	if (group.el[0].att.lindent > 0) level = `padding-left: ${group.el[0].att.lindent}pt;`;
+
 	group.el.forEach((line, lineIndex) => {
+		inlineCSS = style.inlineCSS(rootStyle, block, group, 0, lineIndex);
+
 		if (line.hasOwnProperty("el"))
 			line.el.forEach((t, tIndex) => {
 				if (t.name === "t") {
@@ -72,9 +96,14 @@ const listText = (rootStyle, block, group, groupStyle) => {
 					}
 				} else if (t.name === "xpp") {
 					const ins = style.handleInstructions(t);
-					if (ins !== null) text += ins;
+					if (ins !== null)
+						if (lineIndex === 0) {
+							hangCharacters += ins;
+						} else {
+							text += ins;
+						}
 				} else if (t.name === "rule") {
-					text += handleBlockRules(line, t);
+					text += handleBlockRules(rootStyle, block, group, line, t, tIndex);
 				} else if (t.name === "image") {
 					const folder = remote.getGlobal("saveLocation");
 					if (!fs.existsSync(`${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg`)) {
@@ -85,23 +114,21 @@ const listText = (rootStyle, block, group, groupStyle) => {
 			});
 	});
 
-	return `<td class="group-prehang" style="width: ${hangAmount}pt">${hangCharacters.trim()}</td><td class="group-hang" style="text-align:${group.el[1].att.qdtype}; max-width: ${group.el[1].att.lnwidth}pt;">${text}</td>`;
+	return `<td class="group-prehang" style="${inlineCSS} width: ${hangAmount}pt; padding-top: ${group.el[0].att.prelead}pt; ${level}">${hangCharacters.trim()}</td><td class="group-hang" style="${inlineCSS} text-align:${group.el[1].att.qdtype}; padding-top: ${group.el[0].att.prelead}pt; max-width: ${group.el[1].att.lnwidth}pt;">${text}</td>`;
 };
 
 const tableText = (rootStyle, block, frame, groupStyle) => {
 	const tgroup = frame.el[0];
 	const colspec = tgroup.el.filter(item => item.name === "colspec");
 	const thead = tgroup.el.filter(item => item.name === "thead");
-	const tbody = tgroup.el[tgroup.el.length - 1].el;
+	let tbody = tgroup.el.filter(item => item.name === "tbody");
 	let tempHead = [];
 	let text = "";
 
 	//Push thead into main body rows
 	if (thead !== undefined)
 		thead.forEach(el => {
-			el.el.forEach(row => {
-				tempHead.push(row);
-			});
+			tempHead.push(el);
 		});
 
 	tempHead = tempHead.reverse();
@@ -110,26 +137,28 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 		tbody.unshift(element);
 	});
 
-	tbody.forEach((row, rowIndex) => {
-		let td = "";
+	tbody.forEach((element, rowIndex) => {
+		element.el.forEach((row, rowIndex) => {
+			let td = "";
 
-		row.el.forEach((col, colIndex) => {
-			td += table.parseTD(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec);
-		});
+			row.el.forEach((col, colIndex) => {
+				td += table.parseTD(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec);
+			});
 
-		if (rowIndex + 1 > tgroup.att.hdstyle_rows && tgroup.att.tgroupstyle === "fintab") {
-			if (tgroup.att.stubcols && remote.getGlobal("edgarShade")) {
-				if (row.att.row % 2 === 0) {
-					text += `<tr row="${row.att.rowrel}">${td}</tr>`;
+			if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows) && tgroup.att.tgroupstyle === "fintab") {
+				if (tgroup.att.stubcols && remote.getGlobal("edgarShade")) {
+					if (row.att.row % 2 === 0) {
+						text += `<tr row="${row.att.rowrel}">${td}</tr>`;
+					} else {
+						text += `<tr row="${row.att.rowrel}" style="background-color: #cceeff;">${td}</tr>`;
+					}
 				} else {
-					text += `<tr row="${row.att.rowrel}" style="background-color: #cceeff;">${td}</tr>`;
+					text += `<tr row="${row.att.rowrel}">${td}</tr>`;
 				}
 			} else {
 				text += `<tr row="${row.att.rowrel}">${td}</tr>`;
 			}
-		} else {
-			text += `<tr row="${row.att.rowrel}">${td}</tr>`;
-		}
+		});
 	});
 
 	return text;
@@ -152,8 +181,6 @@ const parseBlockText = (rootStyle, block, group, groupStyle, line, lineIndex, t,
 			if (el.type === "instruction") {
 				const ins = style.handleInstructions(el);
 				if (ins !== null) text += ins;
-			} else if (line.att.bmline && el.txt === " ") {
-				text = `<br><br>`;
 			} else {
 				//Adds usb to text
 				if (elIndex > 1) {
@@ -177,18 +204,64 @@ const parseBlockText = (rootStyle, block, group, groupStyle, line, lineIndex, t,
 	return text;
 };
 
-const handleBlockRules = (line, t) => {
-	if (line.el.length > 3) return "";
-
+const handleBlockRules = (rootStyle, block, group, line, t, tIndex) => {
 	let margin_top = "";
-	if (line.att.qdtype === "left") margin_top = "";
-	if (line.att.qdtype === "center") margin_top = "margin: auto; margin-top: 5px; margin-bottom: 5px;";
+	let margin_bot = "";
+	let display = `inline-block`;
+	let width = ``;
 
-	if (t.att.y < 0) margin_top = `margin-top: ${t.att.y}pt;`;
+	if (line.att.qdtype === "left") margin_top = `margin-top: ${parseInt(line.att.prelead)}pt;`;
+	if (line.att.qdtype === "center") margin_top = `margin: auto; margin-top: ${6 + parseInt(line.att.prelead)}pt; margin-bottom: 3pt;`;
+
+	// if (t.att.y < 0) margin_top = `margin-bottom: ${6 + parseInt(Math.abs(t.att.y))}pt;`;
 	if (t.att.d === "0.5") t.att.d = "1";
 
 	let margin_left = "";
-	if (line.att.lindent !== "0") margin_left = `margin-left: ${line.att.lindent}p`;
+	if (line.att.lindent !== "0") margin_left = `margin-left: ${line.att.lindent}pt;`;
 
-	return `<div class="rule" style="height: 2.67px; border-bottom: ${t.att.d}pt solid ${t.att.color}; width: ${t.att.w}pt; ${margin_top} ${margin_left} display: inline-block;"> </div>`;
+	if (t.att.w > 500 && line.att.qdtype !== "center") {
+		display = `block`;
+	} else {
+		width = `width: ${t.att.w}pt;`;
+	}
+
+	if (parseInt(line.att.xfinal) > 10 && line.att.qdtype === "left") {
+		display = `block`;
+		margin_left = `margin-left: ${parseFloat(line.att.xfinal) - parseFloat(line.att.lindent)}pt;`;
+	}
+
+	if (block.att.type === "main")
+		rootStyle.forEach(element => {
+			if (element.att.name === group.att.style) {
+				// margin_bot = `margin-bottom: -${parseFloat(element.att.size) + parseFloat(t.att.y)}pt;`;
+				return;
+			}
+		});
+
+	return `<div class="rule" style="border-bottom: ${t.att.d}pt solid ${t.att.color}; display: ${display}; ${width} ${margin_top} ${margin_left} ${margin_bot}"> </div>`;
 };
+
+const getPickUp = (page, t) => {
+	const pickupID = t.ins.split(";")[1];
+
+	let img = "";
+
+	const block = page.el
+		.filter(item => {
+			return item.att.type === "pickup";
+		})
+		.filter(item => {
+			return item.att.id === pickupID;
+		});
+
+	const imageID = block[0].el[0].att.id;
+
+	const folder = remote.getGlobal("saveLocation");
+	cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${block[0].att.ssx} -dDEVICEHEIGHTPOINTS=${block[0].att.ssy} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${imageID.substring(0, imageID.length - 4)}.jpg N:\\graphics\\house\\${block[0].el[0].att.id}`);
+
+	img = `<img style="width: ${block[0].att.ssx}pt; max-width: 100%; vertical-align: bottom; float: left; padding-right: 5pt; display: inline-block;" src="${imageID.substring(0, imageID.length - 4)}.jpg">`;
+
+	return img;
+};
+
+const repalceHTMLUnicodes = text => {};

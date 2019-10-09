@@ -3,7 +3,7 @@
 Get job location and display basic information
     
 #### Interface:
-Options: r tags toogle, TOC header toggle, save location, EDGAR shading toggle
+Options: r tags toggle, TOC header toggle, save location, EDGAR shading toggle
 Buttons: Start/Stop, validate links/images
 
 #### Logic
@@ -17,21 +17,15 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 ## HTML TODO:
 
 #### Bugs
+- Rules don't appear at times (nt10002006x1_424b5-FILED)
 
 
 #### Text
-- Continued header not properly breaking between lines. Something to do with CGT and empty lines (Wabtec F-22)
-- Footer not centered (Wabtec F-38)
 - Normalize checkbox sizes
 - Calculate block distances
 
 #### Tables
-- Continued headers breaking issues
 - Headers last column does not need ch spacing
-- Handle box all
-- Set row to max-height 
-- Table width
-- Handle hstyle center
 - Handle EDGAR shading exceptions.
 - Handle rule exceptions.
 - Generate vertical rules.
@@ -43,6 +37,7 @@ On start: Run command to generate XML from XPP project then pass it to JSON tran
 
 #### Other
 - Properly handle red herring.
+- Calc table rules
 
 ***
 

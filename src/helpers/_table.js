@@ -1,10 +1,12 @@
 const style = require("./_style");
 const { remote } = require("electron");
+const help = require("./index");
 const cmd = require("node-cmd");
 
 module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
-	const colspec = colspecs[col.att.col - 1];
 	let colspan = "";
+	let colspecSpan = "";
+	const colspec = colspecs[col.att.col - 1];
 
 	if (col.att.namest !== undefined) {
 		let end = col.att.nameend.slice(3);
@@ -12,88 +14,130 @@ module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex
 		colspan = `colspan="${parseInt(end) - parseInt(start) + 1}"`;
 	}
 
+	if (colspan !== "") {
+		colspecSpan = colspecs[col.att.nameend.slice(3) - 1];
+	}
+
 	let rowspan = "";
 	if (col.att.morerows !== undefined) colspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 
-	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
+	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
 };
 
 const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
 	const isNumber = col.att.alfleft !== undefined;
 	const isLast = style.isLastColumn(tgroup, col);
+	let inlineCSS = "";
 
 	let text = "";
 	let divStyle = [];
-
-	//Stop financial numbers from wrapping
-	if (isNumber) divStyle.push(`white-space: nowrap;`);
+	let shading = style.getShading(col);
 
 	col.el.forEach((group, groupIndex) => {
+		const isNotHeaderCell = parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows);
 		let maxWidth = 0;
 
-		//Handles indent
-		if (group.el[0].att.lindent > 0) divStyle.push(`padding-left: ${group.el[0].att.lindent}pt;`);
-
-		//Handles 2nd line indent
-		if (group.el.length > 1)
-			if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
-				divStyle.push(`margin-left: ${group.el[1].att.lindent}pt; text-indent: -${parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal)}pt;`);
-			}
+		inlineCSS = style.inlineCSS(rootStyle, block, group, 0, groupIndex);
 
 		group.el.forEach((line, lineIndex) => {
 			if (line.el === undefined) return;
 
-			//Basic rules TODO: implement width/color
-			if (line.att.last) {
-				if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: 1pt solid;`); //urule
-				if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: 1pt solid;`); //trule
-				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double;`); // double trule
+			if (row.att.rthk === undefined) row.att.rthk = 1;
+			if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) {
+				row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
+			} else if (row.att["rcolor-cmyk"] === undefined && shading === undefined) {
+				row.att["rcolor-cmyk"] = `1 1 1 1`;
 			}
+
+			if (line.att.last || line.att.nobkpt) {
+				if (row.att.rthk === "0.5") row.att.rthk = 1;
+				if (col.att.rule_info === "1 0 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //urule
+				if (col.att.rule_info === "1 2 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //trule
+				if (col.att.rule_info === "2 0 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //urule
+				if (col.att.rule_info === "2 2 0") divStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`); //trule
+				if (col.att.rule_info === "3 0 0") divStyle.push(`border-bottom: 3pt double ${help.toRGB(row.att["rcolor-cmyk"])};`); // double trule
+				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double ${help.toRGB(row.att["rcolor-cmyk"])};`); // double trule
+			}
+
+			//Stop financial numbers from wrapping
+			if (line.att.first && line.att.last) divStyle.push(`white-space: nowrap;`);
+
+			if (line.att.first && line.att.last && line.att.bandwidth < 2.66 && line.att.bandwidth > 0) divStyle.push(`letter-spacing: -${((2.66 - parseFloat(line.att.bandwidth)) / 10).toFixed(3)}pt;`);
 
 			//Gets max width per each line
 			let currentWidth = 0;
-			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth) - 5.25;
+			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth);
 			maxWidth = Math.max(maxWidth, currentWidth);
 
+			let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
 			//Apply styles to body rows only
-			if (rowIndex + 1 > tgroup.att.hdstyle_rows) {
-				let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
-
+			if (isNotHeaderCell) {
 				//If fin number is on its own line, add line measure difference to the right
 				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
 
-				//Add widths to certian columns
-				if (col.att.col === "1" && line.att.last && line.att.qdtype !== "center" && maxWidth !== 0) {
-					divStyle.push(`width: ${maxWidth}pt;`);
-				} else if (isNumber && line.att.first && line.att.last && line.att.qdtype === "center") {
-					divStyle.push(`width: ${line.att.lnwidth}pt;`);
-				} else if (isNumber && isLast) {
-					divStyle.push(`max-width: ${line.att.lnwidth}pt;`);
-				}
+				// if (col.att.col === "1" && line.att.last && line.att.qdtype !== "center" && maxWidth !== 0) {
+				// 	divStyle.push(`width: ${maxWidth}pt;`);
+				// } else if (isNumber && line.att.first && line.att.last && line.att.qdtype === "center") {
+				// 	divStyle.push(`width: ${line.att.lnwidth}pt;`);
+				// } else if (isNumber && isLast && line.att.lnwidth > 0) {
+				// 	if (line.att.lnwidth < 10) {
+				// 		divStyle.push(`max-width: ${colspec.att.colwidth}pt;`);
+				// 	} else {
+				// 		divStyle.push(`max-width: ${line.att.lnwidth}pt;`);
+				// 	}
+				// }
 
+				//Add margins to certian columns
 				if (line.att.qdtype !== "center" && line.att.last) {
 					if (leftSpace !== 0 && isNumber) {
 						if (leftSpace > parseInt(colspec.att.tbclwsp) / 2) {
 							divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
-							if (!isLast) {
-								divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
-							}
+							if (!isLast) divStyle.push(`margin-right: ${leftSpace.toFixed(2)}pt;`);
 						} else {
-							divStyle.push(`margin-left: ${colspec.att.tbclgut}pt;`);
 							if (!isLast) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 						}
 					} else {
 						if (!isNumber && !isLast) {
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+							if (col.att.col !== "1") divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						} else {
-							// if (Math.abs(parseFloat(colspec.att.colwidth) - parseFloat(colspec.att.tbclwsp) - parseFloat(line.att.lnwidth)) > 0.1) {
-							if (col.att.nameend === undefined) divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
-							// }
+							if (col.att.col !== "1" && line.att.last) divStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
+							if (col.att.col !== "1" && !isNumber && line.att.qdtype !== "left") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
+							divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						}
+					}
+				} else {
+					if ((col.att.col === "1" || col.att.namest === "col1") && !isLast) {
+						let hasRight = divStyle.some(item => {
+							return item.includes("margin-right");
+						});
+
+						if (!hasRight && line.att.last) {
+							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+							// divStyle.push(`padding-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
+						}
+					} else if (line.att.last && isLast) {
+						divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 					}
 				}
 			} else {
-				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`); //Apply style to header column 1
+				//Table headers
+				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`); //Apply style to header column 1
+				if (!isLast && line.att.last) divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut) / 2}pt;`);
+			}
+
+			//Handles table indents
+			if (group.el.length > 1) {
+				if (group.el[1].att.lindent > group.el[0].att.lindent && group.el[0].att.qdtype !== "center") {
+					let lineNum = 0;
+					let diff = parseInt(group.el[1].att.xfinal) - parseInt(group.el[0].att.xfinal);
+					if (group.el[0].att.lindent === "0" && diff === 0) lineNum = 1;
+					if (line.att.last) divStyle.push(`margin-left: ${parseInt(group.el[lineNum].att.lindent) + diff}pt; text-indent: -${diff}pt;`);
+				}
+			} else {
+				if (line.att.lindent > 0 && line.att.first && line.att.last) {
+					divStyle.push(`padding-left: ${group.el[0].att.lindent}pt;`);
+				}
 			}
 
 			line.el.forEach((t, tIndex) => {
@@ -101,20 +145,42 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					const ins = style.handleInstructions(t);
 					if (ins !== null) text += ins;
 				} else {
-					if (t.att.x > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
+					//Add widths to certian columns
+					if (isNotHeaderCell && line.att.last && isNumber && style.hasStyleProperty(divStyle, "max-width") === false) {
+						if (parseFloat(t.att.x) > 0 && t.hasOwnProperty("el")) {
+							divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x)}pt;`);
+						} else if (t.hasOwnProperty("el")) {
+							divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw)}pt;`);
+						}
+					}
+
+					if (parseFloat(t.att.x) > 0 && parseInt(col.att.col) > 1 && text.length > 0) {
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
-						divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(t.att.x)}pt;`);
-					} else if (t.att.x > 0 && text.length < 1) {
+						if (isNumber && style.hasStyleProperty(divStyle, "max-width") === false) divStyle.push(`max-width: ${(parseFloat(line.att.lnwidth) + parseFloat(t.att.x)).toFixed(2)}pt;`);
+					} else if (t.att.x > 0 && text.length < 1 && t.name !== "shape") {
+						const offSet = tXpos(line, t, tIndex);
 						if (tIndex > 1) {
-							const offSet = tXpos(line, t, tIndex);
 							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
 						} else {
 							divStyle.push(`padding-left: ${t.att.x}pt;`);
+						}
+					} else {
+						if (parseFloat(t.att.x) < 0) {
+							let newStyle = divStyle.map(item => {
+								if (item.includes("margin-left") && !isNumber && line.att.qdtype !== "center") {
+									const amt = item.replace(/[^0-9,.]/g, "");
+
+									return `margin-left: ${parseFloat(amt - parseFloat(Math.abs(t.att.x)) + parseFloat(colspec.att.tbclwsp))}pt;`;
+								}
+								return item;
+							});
+							divStyle = newStyle;
 						}
 					}
 				}
 
 				if (t.name === "t" && t.el !== undefined) {
+					if (t.att.suppress) return;
 					t.el.forEach((el, elIndex) => {
 						if (el.type === "instruction") {
 							const ins = style.handleInstructions(el);
@@ -124,19 +190,15 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							if (t.att.cgt && el.txt === ".") return;
 
 							//Removes spaces from fin numbers
-							// if (/\d/.test(el.txt) && isNumber) {
-							// 	if (/\$/.test(el.txt)) {
-							// 		el.txt = el.txt.replace(/ +?/g, "");
-							// 	} else {
-							// 		el.txt = el.txt.trim();
-							// 	}
-							// } else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
-							// 	el.txt = el.txt.replace(/ +?/g, "");
-							// }
-
-							//Offset % when hangs off table
-							if (isNumber && el.txt.includes("%")) divStyle.push(`margin-right: 2.5ch;`);
-
+							if (/\d/.test(el.txt) && isNumber) {
+								if (/\$/.test(el.txt)) {
+									el.txt = el.txt.replace(/ +?/g, "");
+								} else {
+									el.txt = el.txt.trim();
+								}
+							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
+								el.txt = el.txt.replace(/ +?/g, "");
+							}
 							//Adds USB
 							if (elIndex > 1) {
 								if (t.el[elIndex - 1].name === "xpp") {
@@ -145,11 +207,14 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 									}
 								}
 							}
+
 							//Wraps text in style
 							text += style.wrapBlockText(el.txt, t.att.style, rootStyle, group, line, group.att.style, t, tIndex, lineIndex, elIndex);
 
 							//Add line break to generated text that does not have instructions
-							if (line.att.quadset && t.att.cgt) text += `<br/>`;
+							if (line.att.quadset && !style.hasBreakMacro(line) && !line.att.last) {
+								if (group.el[lineIndex + 1] !== undefined) if (group.el[lineIndex + 1].att.yfinal !== line.att.yfinal) text += `<br/>`;
+							}
 						}
 					});
 				}
@@ -162,17 +227,19 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 			});
 		});
 	});
-	return `<div style="${divStyle.join(" ")}">${text}</div>`;
+
+	if (text.length < 1) text += `&nbsp;`;
+
+	return `<div style="${divStyle.join(" ")} ${inlineCSS}">${text}</div>`;
 };
 
 const tXpos = (line, t, tIndex) => {
-	if (line.el === undefined) return;
-
 	let total = 0;
+	if (line.el === undefined) return total;
 
 	for (var i = tIndex; i >= 0; i--) {
 		if (line.el[i].hasOwnProperty("att")) {
-			total += parseFloat(line.el[i].att.x);
+			if (line.el[i].att.hasOwnProperty("x")) total += parseFloat(line.el[i].att.x);
 		}
 	}
 

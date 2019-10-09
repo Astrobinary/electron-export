@@ -48,9 +48,9 @@ const createWindow = () => {
 		if (error) throw error;
 
 		if (Object.keys(data).length === 0) {
-			storage.set("config", { edgarShade: true, tocHeader: true, marked: false }, function(error) {
-				if (error) throw error;
-			});
+			// storage.set("config", { edgarShade: true, tocHeader: true, marked: false }, function(error) {
+			// 	if (error) throw error;
+			// });
 
 			global.edgarShade = true;
 			global.tocHeader = true;
@@ -65,8 +65,10 @@ const createWindow = () => {
 	mainWindow.on("closed", () => (mainWindow = null));
 };
 
+// CLS_Genfin/GRP_house/JOB_nt10002728x1_424b5-FILED
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_s002577x5_424b5-FILED" : process.argv[1];
+	// let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Funds/GRP_Broadridge/JOB_nc10002154x1_def14a-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_house/JOB_nc10001280x1_s4-FILED" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);
@@ -139,8 +141,4 @@ ipcMain.on("updateConfig", (e, obj, key, value) => {
 	global[key] = value;
 
 	e.sender.send("debug", `Config file successfully updated. ${key}: ${value}`);
-});
-
-ipcMain.on("show-error", (e, err) => {
-	dialog.showErrorBox("ERROR", err);
 });
