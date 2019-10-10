@@ -67,7 +67,7 @@ const createTable = (block, frame, gIndex, tgroup, options) => {
 
 	table = `<table class="${tgroup.att.tgroupstyle}" style="${width} ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
 
-	if (hasInsert) table = `<R style="color: purple;">${table}</R>`;
+	if (hasInsert) table = `<R>${table}</R>`;
 
 	return table;
 };

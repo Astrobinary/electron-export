@@ -21,20 +21,17 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 
 	if (parseInt(block.att.bsx) > 612) width = `width: 100%;`;
 
-	//Margin top for frills (temp)
-	if (block.att.type !== "main" && block.att.bisy < 300) {
-		margin = `margin-top: 10pt;`;
-	}
-
 	//Check for sumbox frill
 	if (block.att.bsy > 500 && block.att.type === "frill") return;
+
+	//Margin top for frills (temp)
+	if (block.att.type !== "main" && block.att.bisy < 300) margin = `margin-top: 10pt;`;
 
 	//Check if previous or next block contains sumbox instructions
 	let pageNum;
 	if (page[0].att.bsy > 500 && page[0].att.type === "frill" && block.att.type === "main") pageNum = 0;
 	if (page.length > 0) if (page[1].att.bsy > 500 && page[1].att.type === "frill" && block.att.type === "main") pageNum = 1;
 
-	//Check previous block for spacing
 	if (pageNum !== undefined) {
 		builtBlock = `<div class="block-${block.att.type}" style="${display} ${width} ${createSumbox(page[pageNum].el)} margin: auto; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	} else {

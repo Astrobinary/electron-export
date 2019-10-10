@@ -86,7 +86,6 @@ const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) =
 	}
 
 	let shading = getShadingColor(col);
-
 	if (shading !== undefined) rowStyle.push(`background-color: ${help.toRGB(shading)};`);
 
 	//Cell Hrule
@@ -146,14 +145,11 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 			//Stop text from wrapping
 			if (line.att.first && line.att.last) divStyle.push(`white-space: nowrap;`);
 
-			// if (line.att.first && line.att.last && line.att.bandwidth < 2.66 && line.att.bandwidth > 0) divStyle.push(`letter-spacing: -${((2.66 - parseFloat(line.att.bandwidth)) / 10).toFixed(3)}pt;`);
-
 			//Gets max width per each line
 			let currentWidth = 0;
 			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth);
 			maxWidth = Math.max(maxWidth, currentWidth);
 
-			//Apply styles to body rows only
 			if (isNotHeaderCell)
 				if (line.att.qdtype !== "center" && line.att.last) {
 					const leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
@@ -179,11 +175,7 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 						return item.includes("margin-right");
 					});
 
-					if (!hasRight && line.att.last) {
-						divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
-					} else if (line.att.last && isLast) {
-						divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
-					}
+					if (!hasRight && line.att.last) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 				}
 
 			if (!isNotHeaderCell)
@@ -290,8 +282,7 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 				}
 
 				if (t.name === "image") {
-					const folder = remote.getGlobal("saveLocation");
-					cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+					help.convertImage(t);
 					text += `<img style="width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});

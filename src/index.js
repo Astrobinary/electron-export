@@ -109,7 +109,7 @@ const template = Handlebars.compile(`
 	
 		{{#each this.el}}
 			<div class="page" style="width: 612pt; text-align: center; margin: auto; position: relative;">
-				{{#gather_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
+				{{#sort_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
 					{{#each this}} {{!-- Each block --}}
 
 						{{#create_blocks ../this this @index}} {{!-- Generates block elements --}}
@@ -125,7 +125,7 @@ const template = Handlebars.compile(`
 						{{/create_blocks}}
 
 					{{/each}}
-				{{/gather_blocks}}
+				{{/sort_blocks}}
 			</div>
 			<hr style="page-break-after: always; width: 612pt; margin-top: 20pt; margin-bottom: 20pt; border: 0px; height: 3px; background-color: black" />
 		{{/each}}

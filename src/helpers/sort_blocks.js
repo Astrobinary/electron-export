@@ -1,7 +1,7 @@
 const Handlebars = require("handlebars");
 const { remote } = require("electron");
 
-exports = Handlebars.registerHelper("gather_blocks", (streams, options) => {
+exports = Handlebars.registerHelper("sort_blocks", (streams, options) => {
 	let pageBlocks = [];
 	let footnotes = [];
 
@@ -48,6 +48,7 @@ exports = Handlebars.registerHelper("gather_blocks", (streams, options) => {
 		}
 	}
 
+	//Adds tocheader to every page
 	if (remote.getGlobal("tocHeader")) filterdBlocks.unshift({ att: { type: "tocheader" } });
 
 	return options.fn(filterdBlocks);

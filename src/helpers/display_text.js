@@ -1,6 +1,5 @@
 const Handlebars = require("handlebars");
 const { remote } = require("electron");
-const fs = require("fs");
 const help = require("./index");
 const style = require("./_style");
 const table = require("./_table");
@@ -33,7 +32,7 @@ const blockText = (rootStyle, page, block, group, groupStyle) => {
 				if (t.name === "t") {
 					if (!t.hasOwnProperty("att")) return;
 					if (t.att.suppress) return;
-					text += parseBlockText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
+					text += generateText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
 				} else if (t.name === "xpp") {
 					if (t.ins.includes("pick;")) {
 						text += getPickUp(page, t);
@@ -44,11 +43,7 @@ const blockText = (rootStyle, page, block, group, groupStyle) => {
 				} else if (t.name === "rule") {
 					text += handleBlockRules(rootStyle, block, group, line, t, tIndex);
 				} else if (t.name === "image") {
-					const folder = remote.getGlobal("saveLocation");
-					// if (!fs.existsSync(`${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg`)) {
-					// cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
-					// }
-
+					help.convertImage(t);
 					text += `<img style="width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});
@@ -64,9 +59,7 @@ const blockText = (rootStyle, page, block, group, groupStyle) => {
 	});
 
 	let tempText = text.replace(/<[^>]*>/gm, "").replace(/\s+/gm, "");
-	if (tempText.toUpperCase().includes("TABLEOFCONTENTS") && !group.att.style.includes("para")) {
-		text = `<a name="_toc"></a>${text}`;
-	}
+	if (tempText.toUpperCase().includes("TABLEOFCONTENTS") && !group.att.style.includes("para")) text = `<a name="_toc"></a>${text}`;
 
 	return text;
 };
@@ -90,9 +83,9 @@ const listText = (rootStyle, block, group, groupStyle) => {
 					if (t.att.suppress) return;
 
 					if (lineIndex === 0) {
-						hangCharacters += parseBlockText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
+						hangCharacters += generateText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
 					} else {
-						text += parseBlockText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
+						text += generateText(rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex);
 					}
 				} else if (t.name === "xpp") {
 					const ins = style.handleInstructions(t);
@@ -105,10 +98,7 @@ const listText = (rootStyle, block, group, groupStyle) => {
 				} else if (t.name === "rule") {
 					text += handleBlockRules(rootStyle, block, group, line, t, tIndex);
 				} else if (t.name === "image") {
-					const folder = remote.getGlobal("saveLocation");
-					if (!fs.existsSync(`${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg`)) {
-						// cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
-					}
+					help.convertImage(t);
 					text += `<img style="-ms-interpolation-mode: bicubic; width: ${parseFloat(t.att.w) * parseFloat(t.att.scale)}pt; max-width: 100%; vertical-align: bottom;" src="${t.att.id.substring(0, t.att.id.length - 4)}.jpg"/>`;
 				}
 			});
@@ -164,9 +154,9 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 	return text;
 };
 
-const parseBlockText = (rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex) => {
+const generateText = (rootStyle, block, group, groupStyle, line, lineIndex, t, tIndex) => {
 	let text = "";
-	// //Check for empty generated lines
+	//Check for empty generated lines
 	if (!t.el) {
 		if (!t.hasOwnProperty("att")) return;
 		if (t.att.hasOwnProperty("cgt") && t.hasOwnProperty("el")) return `<div>&nbsp;</div>`;
@@ -244,7 +234,7 @@ const getPickUp = (page, t) => {
 	const imageID = block[0].el[0].att.id;
 
 	const folder = remote.getGlobal("saveLocation");
-	// cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${block[0].att.ssx} -dDEVICEHEIGHTPOINTS=${block[0].att.ssy} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${imageID.substring(0, imageID.length - 4)}.jpg N:\\graphics\\house\\${block[0].el[0].att.id}`);
+	cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${block[0].att.ssx} -dDEVICEHEIGHTPOINTS=${block[0].att.ssy} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${imageID.substring(0, imageID.length - 4)}.jpg N:\\graphics\\house\\${block[0].el[0].att.id}`);
 
 	img = `<img style="width: ${block[0].att.ssx}pt; max-width: 100%; vertical-align: bottom; float: left; padding-right: 5pt; display: inline-block;" src="${imageID.substring(0, imageID.length - 4)}.jpg">`;
 
