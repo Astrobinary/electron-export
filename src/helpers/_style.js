@@ -43,9 +43,9 @@ module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) =>
 		}
 	}
 
+	//Right indent
 	if (group.el[0].att.rindent > 0) style += `padding-right: ${att.rindent}pt;`;
 
-	//Right indent
 	style += `text-align: ${att.qdtype};`;
 
 	if (gindex === 0 && group.att.class === "ftnote") {
@@ -113,7 +113,6 @@ module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) =>
 		}
 
 		let fontSize = "";
-
 		if (parseInt(rootatt.size) > 1) fontSize = `font-size: ${rootatt.size}pt;`;
 
 		style += `${fontSize} ${lineHeight} font-family: ${fontFamily};`;
@@ -202,141 +201,10 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	return text;
 };
 
-//Style related to table rows (TD)
-module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) => {
-	const styleClass = col.el[0].att.style;
-	const firstLine = col.el[0].el[0];
-	const isLast = this.isLastColumn(tgroup, col);
-
-	let rowStyle = [];
-	let rootAtt;
-
-	rootStyle.forEach(item => {
-		if (item.att.name === styleClass) {
-			rootAtt = item.att;
-			return;
-		}
+module.exports.hasStyleProperty = (arr, target) => {
+	return arr.some(style => {
+		return style.split(":")[0] === target;
 	});
-
-	if (!colspec.hasOwnProperty("att")) return;
-
-	if (colspec.att.tbclgut > 0) {
-		//Cell Header rows
-		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows)) {
-			if (isLast) {
-				rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
-				rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
-			}
-
-			if (col.att.namest !== undefined) {
-				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
-					rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
-				}
-			} else {
-				if (tgroup.att.cols !== col.att.col) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
-			}
-		} else {
-			if (col.att.align === "center" && isLast) rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
-		}
-	}
-
-	//Cell text size
-	if (parseInt(rootAtt.size) > 1) rowStyle.push(`font-size: ${rootAtt.size}pt;`);
-
-	//Cell line height
-	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
-
-	//Cell width
-	if (isLast || col.att.nameend) {
-		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
-	} else {
-		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${colspec.att.colwidth}pt;`);
-	}
-
-	//Row gutter
-	if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows)) {
-		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.hdr_rows)) {
-			if (parseInt(row.att.row_gutter) <= 6) {
-				rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
-			}
-		}
-		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.mx_rows)) {
-			if (parseInt(row.att.row_gutter) <= 6) {
-				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
-			}
-		}
-	} else {
-		if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
-	}
-
-	let shading = this.getShadingColor(col);
-
-	if (shading !== undefined) rowStyle.push(`background-color: ${help.toRGB(shading)};`);
-
-	//Cell Hrule
-	if (row.att.rthk === undefined) row.att.rthk = 1;
-	if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
-	if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
-	if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
-
-	//Vrule
-	if (parseFloat(colspec.att.tbcrrule) > 0 && !this.hasXvrule(col)) {
-		if (colspec.att.tbcrrule === "0.5") colspec.att.tbcrrule = 1;
-		rowStyle.push(`border-right: ${colspec.att.tbcrrule}pt solid ${help.toRGB(colspec.att["tbcr_rcolor-cmyk"])};`);
-	} else if (colspecSpan !== "") {
-		if (parseFloat(colspecSpan.att.tbcrrule) > 0 && !this.hasXvrule(col)) {
-			if (colspecSpan.att.tbcrrule === "0.5") colspecSpan.att.tbcrrule = 1;
-			rowStyle.push(`border-right: ${colspecSpan.att.tbcrrule}pt solid ${help.toRGB(colspecSpan.att["tbcr_rcolor-cmyk"])};`);
-		}
-	}
-
-	return rowStyle.join(" ");
-};
-
-module.exports.isLastColumn = (tgroup, col) => {
-	if (tgroup.att.cols === col.att.col) return true;
-	if (!col.att.hasOwnProperty("namest")) return false;
-	if (parseInt(tgroup.att.cols) === parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) return true;
-
-	return false;
-};
-
-module.exports.getShadingColor = col => {
-	let shadeColor;
-
-	col.el.forEach(group => {
-		group.el.forEach(line => {
-			if (line.el === undefined) return;
-			line.el.forEach(t => {
-				if (t.name === "shape") {
-					shadeColor = t.att["color-cmyk"];
-					return shadeColor;
-				}
-			});
-		});
-	});
-
-	return shadeColor;
-};
-
-module.exports.hasCalHang = col => {
-	col.el.forEach(group => {
-		group.el.forEach(line => {
-			if (line.el === undefined) return;
-			if (line.el.ins === "cal;rhang") return true;
-			line.el.forEach(t => {
-				if (t.name === "t" && t.el !== undefined) {
-					t.el.forEach(el => {
-						if (el.type === "instruction") {
-							if (el.ins === "cal;rhang") return true;
-						}
-					});
-				}
-			});
-		});
-	});
-
-	return false;
 };
 
 module.exports.hasBreakMacro = line => {
@@ -359,38 +227,6 @@ module.exports.hasBreakMacro = line => {
 	});
 
 	return hasBreak;
-};
-
-module.exports.hasXvrule = col => {
-	let hasVrule = false;
-
-	col.el.forEach(group => {
-		group.el.forEach(line => {
-			line.el.forEach(t => {
-				if (t.name === "t" && t.el !== undefined) {
-					t.el.forEach(el => {
-						if (el.type === "instruction") {
-							if (el.ins === "xvrule") hasVrule = true;
-							return hasVrule;
-						}
-					});
-				} else {
-					if (t.type === "instruction") {
-						if (t.ins === "xvrule") hasVrule = true;
-						return hasVrule;
-					}
-				}
-			});
-		});
-	});
-
-	return hasVrule;
-};
-
-module.exports.hasStyleProperty = (arr, target) => {
-	return arr.some(style => {
-		return style.split(":")[0] === target;
-	});
 };
 
 module.exports.handleInstructions = el => {

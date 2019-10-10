@@ -3,7 +3,7 @@ const { remote } = require("electron");
 const help = require("./index");
 const cmd = require("node-cmd");
 
-module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
+module.exports.cellContainer = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
 	const colspec = colspecs[col.att.col - 1];
 	let columnSpan = "";
 	let colspecWithSpan = "";
@@ -16,16 +16,106 @@ module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex
 	let rowspan = "";
 	if (col.att.morerows !== undefined) rowspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 
-	return `<td ${columnSpan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecWithSpan)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
+	return `<td ${columnSpan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecWithSpan)}" >${cellStyle(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
 };
 
-const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
+const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) => {
+	const styleClass = col.el[0].att.style;
+	const firstLine = col.el[0].el[0];
+	const isLast = isLastColumn(tgroup, col);
+
+	let rowStyle = [];
+	let rootAtt;
+
+	rootStyle.forEach(item => {
+		if (item.att.name === styleClass) {
+			rootAtt = item.att;
+			return;
+		}
+	});
+
+	if (!colspec.hasOwnProperty("att")) return;
+
+	if (colspec.att.tbclgut > 0) {
+		//Cell Header rows
+		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows)) {
+			if (isLast) {
+				rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+				rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
+			}
+
+			if (col.att.namest !== undefined) {
+				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
+					rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
+				}
+			} else {
+				if (tgroup.att.cols !== col.att.col) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
+			}
+		} else {
+			if (col.att.align === "center" && isLast) rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
+		}
+	}
+
+	//Cell text size
+	if (parseInt(rootAtt.size) > 1) rowStyle.push(`font-size: ${rootAtt.size}pt;`);
+
+	//Cell line height
+	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
+
+	//Cell width
+	if (isLast || col.att.nameend) {
+		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
+	} else {
+		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${colspec.att.colwidth}pt;`);
+	}
+
+	//Row gutter
+	if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows)) {
+		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.hdr_rows)) {
+			if (parseInt(row.att.row_gutter) <= 6) {
+				rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
+			}
+		}
+		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.mx_rows)) {
+			if (parseInt(row.att.row_gutter) <= 6) {
+				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
+			}
+		}
+	} else {
+		if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
+	}
+
+	let shading = getShadingColor(col);
+
+	if (shading !== undefined) rowStyle.push(`background-color: ${help.toRGB(shading)};`);
+
+	//Cell Hrule
+	if (row.att.rthk === undefined) row.att.rthk = 1;
+	if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
+	if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
+	if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
+
+	//Vrule
+	if (parseFloat(colspec.att.tbcrrule) > 0 && !hasXvrule(col)) {
+		if (colspec.att.tbcrrule === "0.5") colspec.att.tbcrrule = 1;
+		rowStyle.push(`border-right: ${colspec.att.tbcrrule}pt solid ${help.toRGB(colspec.att["tbcr_rcolor-cmyk"])};`);
+	} else if (colspecSpan !== "") {
+		if (parseFloat(colspecSpan.att.tbcrrule) > 0 && !hasXvrule(col)) {
+			if (colspecSpan.att.tbcrrule === "0.5") colspecSpan.att.tbcrrule = 1;
+			rowStyle.push(`border-right: ${colspecSpan.att.tbcrrule}pt solid ${help.toRGB(colspecSpan.att["tbcr_rcolor-cmyk"])};`);
+		}
+	}
+
+	return rowStyle.join(" ");
+};
+
+const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
 	const isNumber = col.att.alfleft !== undefined;
-	const isLast = style.isLastColumn(tgroup, col);
+	const isLast = isLastColumn(tgroup, col);
 	let text = "";
 	let inlineCSS = "";
 	let divStyle = [];
-	let shading = style.getShadingColor(col);
+	let shading = getShadingColor(col);
 
 	col.el.forEach((group, groupIndex) => {
 		const isNotHeaderCell = parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows);
@@ -226,6 +316,50 @@ const getTotalX = (line, tIndex) => {
 	return total;
 };
 
+const getShadingColor = col => {
+	let shadeColor;
+
+	col.el.forEach(group => {
+		group.el.forEach(line => {
+			if (line.el === undefined) return;
+			line.el.forEach(t => {
+				if (t.name === "shape") {
+					shadeColor = t.att["color-cmyk"];
+					return shadeColor;
+				}
+			});
+		});
+	});
+
+	return shadeColor;
+};
+
+const hasXvrule = col => {
+	let hasVrule = false;
+
+	col.el.forEach(group => {
+		group.el.forEach(line => {
+			line.el.forEach(t => {
+				if (t.name === "t" && t.el !== undefined) {
+					t.el.forEach(el => {
+						if (el.type === "instruction") {
+							if (el.ins === "xvrule") hasVrule = true;
+							return hasVrule;
+						}
+					});
+				} else {
+					if (t.type === "instruction") {
+						if (t.ins === "xvrule") hasVrule = true;
+						return hasVrule;
+					}
+				}
+			});
+		});
+	});
+
+	return hasVrule;
+};
+
 const hasThinSpaceBeforeBox = (line, tIndex, el) => {
 	if (line.el[tIndex + 1] !== undefined) {
 		if (line.el[tIndex + 1].name === "t") {
@@ -236,6 +370,14 @@ const hasThinSpaceBeforeBox = (line, tIndex, el) => {
 			}
 		}
 	}
+
+	return false;
+};
+
+const isLastColumn = (tgroup, col) => {
+	if (tgroup.att.cols === col.att.col) return true;
+	if (!col.att.hasOwnProperty("namest")) return false;
+	if (parseInt(tgroup.att.cols) === parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) return true;
 
 	return false;
 };

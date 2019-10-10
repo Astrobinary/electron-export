@@ -3,7 +3,7 @@ const Handlebars = require("handlebars");
 //Gathers all custom helpers for handlebars
 exports.gather_blocks = require("./gather_blocks");
 exports.create_blocks = require("./create_blocks");
-exports.create_tags = require("./create_tags");
+exports.create_tags = require("./create_group");
 exports.display_text = require("./display_text");
 
 //Outputs current context

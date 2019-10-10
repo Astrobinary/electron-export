@@ -142,7 +142,7 @@ const tableText = (rootStyle, block, frame, groupStyle) => {
 			let td = "";
 
 			row.el.forEach((col, colIndex) => {
-				td += table.parseTD(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec);
+				td += table.cellContainer(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec);
 			});
 
 			if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows) && tgroup.att.tgroupstyle === "fintab") {
