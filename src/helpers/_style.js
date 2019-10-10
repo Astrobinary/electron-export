@@ -1,8 +1,7 @@
-// const { remote } = require("electron");
 const help = require("./index");
 
 //Created style based on element attributes
-module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
+module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) => {
 	let att;
 	let style = "";
 	let rootatt;
@@ -49,24 +48,31 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 	//Right indent
 	style += `text-align: ${att.qdtype};`;
 
-	//Add margin if not first block in group (used for pc2)
-	// if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
-	// 	if (att.prelead === "0") {
-	// 		style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
-	// 	} else {
-	// 		style += `padding-top: ${parseFloat(att.prelead)}pt;`;
-	// 	}
-	// } else {
 	if (gindex === 0 && group.att.class === "ftnote") {
 		style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 	} else {
 		if (parseFloat(att.prelead) < 0) {
-			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+			//Don't add negative top margin to covers
+			if (page !== undefined) {
+				if (page.hasOwnProperty("type")) {
+					if (!page.att.plname.includes("cov")) {
+						style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+					}
+				}
+			} else {
+				style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+			}
 		} else {
 			if (parseFloat(att.prelead) === 0) {
 				if (gindex === 0 && lineIndex === 0 && !att.tbsa) style += `padding-top: ${parseFloat(att.yfinal)}pt;`;
 			} else {
-				style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+				if (group.hasOwnProperty("att")) {
+					if (group.att.hasOwnProperty("style")) {
+						if (!group.att.style.includes("calc.")) style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+					} else {
+						style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+					}
+				}
 			}
 		}
 	}
@@ -193,11 +199,6 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	//Wraps text around page ref link
 	if (tIndex > 1 && t.att.cgt) if (group.el[lineIndex].el[tIndex - 1].name === "xref") text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
 
-	// if (remote.getGlobal("marked"))
-	// 	if (t.att.trace === "insert" && !t.att.style.includes("unknown")) {
-	// 		text = `<R style="color: purple;">${text}</R>`;
-	// 	}
-
 	return text;
 };
 
@@ -222,9 +223,10 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colsp
 	if (colspec.att.tbclgut > 0) {
 		//Cell Header rows
 		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows)) {
-			if (tgroup.att.tgroupstyle === "fintab" && tgroup.att.cols === col.att.col) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
-
-			if (isLast) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
+			if (isLast) {
+				rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
+				rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
+			}
 
 			if (col.att.namest !== undefined) {
 				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
@@ -233,6 +235,8 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colsp
 			} else {
 				if (tgroup.att.cols !== col.att.col) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
 			}
+		} else {
+			if (col.att.align === "center" && isLast) rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
 		}
 	}
 
@@ -265,7 +269,7 @@ module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colsp
 		if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
 	}
 
-	let shading = this.getShading(col);
+	let shading = this.getShadingColor(col);
 
 	if (shading !== undefined) rowStyle.push(`background-color: ${help.toRGB(shading)};`);
 
@@ -297,13 +301,13 @@ module.exports.isLastColumn = (tgroup, col) => {
 	return false;
 };
 
-module.exports.getShading = col => {
+module.exports.getShadingColor = col => {
 	let shadeColor;
 
-	col.el.forEach((group, groupIndex) => {
-		group.el.forEach((line, lineIndex) => {
+	col.el.forEach(group => {
+		group.el.forEach(line => {
 			if (line.el === undefined) return;
-			line.el.forEach((t, tIndex) => {
+			line.el.forEach(t => {
 				if (t.name === "shape") {
 					shadeColor = t.att["color-cmyk"];
 					return shadeColor;
@@ -315,29 +319,14 @@ module.exports.getShading = col => {
 	return shadeColor;
 };
 
-const getMaxWidth = col => {
-	let max = 0;
-
-	col.el.forEach(group => {
-		let maxWidth = 0;
-		group.el.forEach(line => {
-			let currentWidth = 0;
-			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth);
-			maxWidth = Math.max(maxWidth, currentWidth);
-		});
-		return (max = maxWidth);
-	});
-	return max;
-};
-
 module.exports.hasCalHang = col => {
-	col.el.forEach((group, groupIndex) => {
-		group.el.forEach((line, lineIndex) => {
+	col.el.forEach(group => {
+		group.el.forEach(line => {
 			if (line.el === undefined) return;
 			if (line.el.ins === "cal;rhang") return true;
-			line.el.forEach((t, tIndex) => {
+			line.el.forEach(t => {
 				if (t.name === "t" && t.el !== undefined) {
-					t.el.forEach((el, elIndex) => {
+					t.el.forEach(el => {
 						if (el.type === "instruction") {
 							if (el.ins === "cal;rhang") return true;
 						}
@@ -353,9 +342,9 @@ module.exports.hasCalHang = col => {
 module.exports.hasBreakMacro = line => {
 	let hasBreak = false;
 
-	line.el.forEach((t, tIndex) => {
+	line.el.forEach(t => {
 		if (t.name === "t" && t.el !== undefined) {
-			t.el.forEach((el, elIndex) => {
+			t.el.forEach(el => {
 				if (el.type === "instruction") {
 					if (el.ins === "qa" || el.ins === "l") hasBreak = true;
 					return hasBreak;
@@ -375,11 +364,11 @@ module.exports.hasBreakMacro = line => {
 module.exports.hasXvrule = col => {
 	let hasVrule = false;
 
-	col.el.forEach((group, tIndex) => {
-		group.el.forEach((line, tIndex) => {
-			line.el.forEach((t, tIndex) => {
+	col.el.forEach(group => {
+		group.el.forEach(line => {
+			line.el.forEach(t => {
 				if (t.name === "t" && t.el !== undefined) {
-					t.el.forEach((el, elIndex) => {
+					t.el.forEach(el => {
 						if (el.type === "instruction") {
 							if (el.ins === "xvrule") hasVrule = true;
 							return hasVrule;
@@ -399,52 +388,22 @@ module.exports.hasXvrule = col => {
 };
 
 module.exports.hasStyleProperty = (arr, target) => {
-	let has = false;
-
-	arr.forEach(style => {
-		const key = style.split(":")[0];
-		if (key === target) has = true;
+	return arr.some(style => {
+		return style.split(":")[0] === target;
 	});
-
-	return has;
-};
-
-module.exports.getValueMinMax = (arr, target, current, higher) => {
-	let prev;
-
-	arr.forEach(item => {
-		if (item.includes(target)) {
-			console.log("here");
-			prev = item.split(":")[1];
-
-			// prev = parseFloat(item.slice(target.length + 1, -3));
-
-			if (parseFloat(current) < parseFloat(prev)) {
-				return current;
-			} else {
-				return prev;
-			}
-		} else {
-			console.log(current);
-			return current;
-		}
-	});
-
-	return current;
 };
 
 module.exports.handleInstructions = el => {
 	if (el.ins === "qa") return `<br/>`;
 	if (el.ins === "l") return `<br/>`;
-
 	if (el.ins === "lz") return `&nbsp;`;
 
 	if (el.ins.includes("link;")) return `<a href="${el.ins.slice(5)}">`;
 	if (el.ins === "/link") return `</a>`;
+
 	if (el.ins === "sup") return `<sup style="line-height: 0;">`;
 	if (el.ins === "reset") return `</sup>`;
 
-	// "ins": "ru;%bsx;4q"
 	if (el.ins.includes("ru;")) {
 		const params = el.ins.split(";");
 		return `<div style="border-bottom: ${params[2].replace(/\D+/gm, "")}pt solid black;">&nbsp;</div>`;

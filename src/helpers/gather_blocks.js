@@ -9,6 +9,7 @@ exports = Handlebars.registerHelper("gather_blocks", (streams, options) => {
 	for (let i = 0; i < streams.length; i++) {
 		for (let x = 0; x < streams[i].el.length; x++) {
 			if (streams[i].el[x].type === "element" && streams[i].el[x].att.type !== "footnote") {
+				if (streams[i].el[x].att.rotate === "90") streams[i].el[x].att.by = -1;
 				pageBlocks.push(streams[i].el[x]);
 			} else if (streams[i].el[x].type === "element" && streams[i].el[x].att.type === "footnote") {
 				footnotes.push(streams[i].el[x]);
@@ -16,7 +17,7 @@ exports = Handlebars.registerHelper("gather_blocks", (streams, options) => {
 		}
 	}
 
-	//Sorts the blocks based on page position (_att.by)
+	//Sorts the blocks based on page position (att.by)
 	let filterdBlocks = pageBlocks.sort((a, b) => {
 		if (a.att.by === b.att.by) {
 			if (a.att.fipcblk) {

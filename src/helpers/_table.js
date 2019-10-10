@@ -4,40 +4,34 @@ const help = require("./index");
 const cmd = require("node-cmd");
 
 module.exports.parseTD = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
-	let colspan = "";
-	let colspecSpan = "";
 	const colspec = colspecs[col.att.col - 1];
+	let columnSpan = "";
+	let colspecWithSpan = "";
 
 	if (col.att.namest !== undefined) {
-		let end = col.att.nameend.slice(3);
-		let start = col.att.namest.slice(3);
-		colspan = `colspan="${parseInt(end) - parseInt(start) + 1}"`;
-	}
-
-	if (colspan !== "") {
-		colspecSpan = colspecs[col.att.nameend.slice(3) - 1];
+		columnSpan = `colspan="${parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + 1}"`;
+		colspecWithSpan = colspecs[col.att.nameend.slice(3) - 1];
 	}
 
 	let rowspan = "";
-	if (col.att.morerows !== undefined) colspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
+	if (col.att.morerows !== undefined) rowspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 
-	return `<td ${colspan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
+	return `<td ${columnSpan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${style.rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecWithSpan)}" >${tdText(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
 };
 
 const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
 	const isNumber = col.att.alfleft !== undefined;
 	const isLast = style.isLastColumn(tgroup, col);
-	let inlineCSS = "";
-
 	let text = "";
+	let inlineCSS = "";
 	let divStyle = [];
-	let shading = style.getShading(col);
+	let shading = style.getShadingColor(col);
 
 	col.el.forEach((group, groupIndex) => {
 		const isNotHeaderCell = parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows);
 		let maxWidth = 0;
 
-		inlineCSS = style.inlineCSS(rootStyle, block, group, 0, groupIndex);
+		inlineCSS = style.inlineCSS(rootStyle, undefined, block, group, 0, groupIndex);
 
 		group.el.forEach((line, lineIndex) => {
 			if (line.el === undefined) return;
@@ -59,36 +53,20 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 				if (col.att.rule_info === "3 2 0") divStyle.push(`border-bottom: 3pt double ${help.toRGB(row.att["rcolor-cmyk"])};`); // double trule
 			}
 
-			//Stop financial numbers from wrapping
+			//Stop text from wrapping
 			if (line.att.first && line.att.last) divStyle.push(`white-space: nowrap;`);
 
-			if (line.att.first && line.att.last && line.att.bandwidth < 2.66 && line.att.bandwidth > 0) divStyle.push(`letter-spacing: -${((2.66 - parseFloat(line.att.bandwidth)) / 10).toFixed(3)}pt;`);
+			// if (line.att.first && line.att.last && line.att.bandwidth < 2.66 && line.att.bandwidth > 0) divStyle.push(`letter-spacing: -${((2.66 - parseFloat(line.att.bandwidth)) / 10).toFixed(3)}pt;`);
 
 			//Gets max width per each line
 			let currentWidth = 0;
 			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth);
 			maxWidth = Math.max(maxWidth, currentWidth);
 
-			let leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
 			//Apply styles to body rows only
-			if (isNotHeaderCell) {
-				//If fin number is on its own line, add line measure difference to the right
-				if (!line.att.quadset && !(line.att.first && line.att.last) && isNumber) divStyle.push(`padding-right: ${(parseFloat(colspec.att.tbcmeas) - parseFloat(line.att.lnwidth)).toFixed()}pt;`);
-
-				// if (col.att.col === "1" && line.att.last && line.att.qdtype !== "center" && maxWidth !== 0) {
-				// 	divStyle.push(`width: ${maxWidth}pt;`);
-				// } else if (isNumber && line.att.first && line.att.last && line.att.qdtype === "center") {
-				// 	divStyle.push(`width: ${line.att.lnwidth}pt;`);
-				// } else if (isNumber && isLast && line.att.lnwidth > 0) {
-				// 	if (line.att.lnwidth < 10) {
-				// 		divStyle.push(`max-width: ${colspec.att.colwidth}pt;`);
-				// 	} else {
-				// 		divStyle.push(`max-width: ${line.att.lnwidth}pt;`);
-				// 	}
-				// }
-
-				//Add margins to certian columns
+			if (isNotHeaderCell)
 				if (line.att.qdtype !== "center" && line.att.last) {
+					const leftSpace = parseFloat(line.att.xfinal) - parseFloat(colspec.att.tbcxpos);
 					if (leftSpace !== 0 && isNumber) {
 						if (leftSpace > parseInt(colspec.att.tbclwsp) / 2) {
 							divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
@@ -100,31 +78,29 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 						if (!isNumber && !isLast) {
 							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 							if (col.att.col !== "1") divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
-						} else {
-							if (col.att.col !== "1" && line.att.last) divStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
-							if (col.att.col !== "1" && !isNumber && line.att.qdtype !== "left") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
+						} else if (col.att.col !== "1") {
+							if (line.att.last) divStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
+							if (!isNumber && line.att.qdtype !== "left") divStyle.push(`margin-left: ${leftSpace.toFixed(2)}pt;`);
 							divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 						}
 					}
-				} else {
-					if ((col.att.col === "1" || col.att.namest === "col1") && !isLast) {
-						let hasRight = divStyle.some(item => {
-							return item.includes("margin-right");
-						});
+				} else if ((col.att.col === "1" || col.att.namest === "col1") && !isLast) {
+					let hasRight = divStyle.some(item => {
+						return item.includes("margin-right");
+					});
 
-						if (!hasRight && line.att.last) {
-							divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
-							// divStyle.push(`padding-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
-						}
+					if (!hasRight && line.att.last) {
+						divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 					} else if (line.att.last && isLast) {
 						divStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
 					}
 				}
-			} else {
-				//Table headers
-				if (col.att.col === "1" && !isLast && line.att.last) divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`); //Apply style to header column 1
-				if (!isLast && line.att.last) divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut) / 2}pt;`);
-			}
+
+			if (!isNotHeaderCell)
+				if (!isLast && line.att.last) {
+					divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut) / 2}pt;`);
+					if (col.att.col === "1") divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
+				}
 
 			//Handles table indents
 			if (group.el.length > 1) {
@@ -146,9 +122,13 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 					if (ins !== null) text += ins;
 				} else {
 					//Add widths to certian columns
-					if (isNotHeaderCell && line.att.last && isNumber && style.hasStyleProperty(divStyle, "max-width") === false) {
+					if (isNotHeaderCell && line.att.last && isNumber && !style.hasStyleProperty(divStyle, "max-width")) {
 						if (parseFloat(t.att.x) > 0 && t.hasOwnProperty("el")) {
-							divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x)}pt;`);
+							if (isLast && col.att.rule_info === undefined) {
+								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) + parseFloat(t.att.x)}pt;`);
+							} else {
+								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x)}pt;`);
+							}
 						} else if (t.hasOwnProperty("el")) {
 							divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw)}pt;`);
 						}
@@ -158,7 +138,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 						text += `<var style="padding-left: ${t.att.x}pt;"></var>`;
 						if (isNumber && style.hasStyleProperty(divStyle, "max-width") === false) divStyle.push(`max-width: ${(parseFloat(line.att.lnwidth) + parseFloat(t.att.x)).toFixed(2)}pt;`);
 					} else if (t.att.x > 0 && text.length < 1 && t.name !== "shape") {
-						const offSet = tXpos(line, t, tIndex);
+						const offSet = getTotalX(line, tIndex);
 						if (tIndex > 1) {
 							if (offSet > 0) divStyle.push(`padding-left: ${offSet}pt;`);
 						} else {
@@ -188,8 +168,9 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 						} else {
 							if (el.txt === undefined) return;
 							if (t.att.cgt && el.txt === ".") return;
+							if (hasThinSpaceBeforeBox(line, tIndex, el)) return;
 
-							//Removes spaces from fin numbers
+							//Removes spaces from financial numbers
 							if (/\d/.test(el.txt) && isNumber) {
 								if (/\$/.test(el.txt)) {
 									el.txt = el.txt.replace(/ +?/g, "");
@@ -199,16 +180,15 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 							} else if ((/\d/.test(el.txt) && /\$/.test(el.txt) && isNumber) || /\s—/.test(el.txt)) {
 								el.txt = el.txt.replace(/ +?/g, "");
 							}
+
 							//Adds USB
 							if (elIndex > 1) {
-								if (t.el[elIndex - 1].name === "xpp") {
-									if (t.el[elIndex - 1].ins === "usb") {
-										if (el.txt.split(" ")[0] === "") el.txt = `&nbsp;${el.txt.slice(1)}`;
-									}
+								if (t.el[elIndex - 1].ins === "usb") {
+									if (el.txt.split(" ")[0] === "") el.txt = `&nbsp;${el.txt.slice(1)}`;
 								}
 							}
 
-							//Wraps text in style
+							//Wraps text in styles
 							text += style.wrapBlockText(el.txt, t.att.style, rootStyle, group, line, group.att.style, t, tIndex, lineIndex, elIndex);
 
 							//Add line break to generated text that does not have instructions
@@ -233,7 +213,7 @@ const tdText = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)
 	return `<div style="${divStyle.join(" ")} ${inlineCSS}">${text}</div>`;
 };
 
-const tXpos = (line, t, tIndex) => {
+const getTotalX = (line, tIndex) => {
 	let total = 0;
 	if (line.el === undefined) return total;
 
@@ -246,32 +226,16 @@ const tXpos = (line, t, tIndex) => {
 	return total;
 };
 
-// const checkChgrow = row => {
-// 	let rulestats = { xvrule: 0, xrule: 0, rule: 0 };
+const hasThinSpaceBeforeBox = (line, tIndex, el) => {
+	if (line.el[tIndex + 1] !== undefined) {
+		if (line.el[tIndex + 1].name === "t") {
+			if (line.el[tIndex + 1].el !== undefined) {
+				if (line.el[tIndex + 1].el[0].txt === "☐") {
+					if (el.txt.length === 1) return true;
+				}
+			}
+		}
+	}
 
-// 	row.el.forEach(entry => {
-// 		entry.el.forEach(group => {
-// 			group.el.forEach(line => {
-// 				if (line.hasOwnProperty("el"))
-// 					line.el.forEach(t => {
-// 						if (t.ins === undefined) return;
-// 						let ins = t.ins;
-
-// 						if (ins === "chgrow;xvrule") {
-// 							rulestats.xvrule = parseInt(entry.att.col);
-// 						}
-
-// 						if (ins.includes("chgrow;xrule")) {
-// 							rulestats.xrule = parseInt(entry.att.col);
-// 						}
-
-// 						if (ins.includes("chgrow;trule")) {
-// 							rulestats.rule = parseInt(entry.att.col);
-// 						}
-// 					});
-// 			});
-// 		});
-// 	});
-
-// 	return rulestats;
-// };
+	return false;
+};

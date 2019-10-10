@@ -4,18 +4,14 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 	let builtBlock = "";
 	let margin = "";
 	let display = "display: block;";
+	let width = `width: ${parseFloat(block.att.bsx) + 16}pt;`;
 
 	if (block.att.type === "tocheader") return new Handlebars.SafeString(`<a href="#_toc" style="font-size: 8pt; text-align: left; margin-bottom: 20px; display: block;">TABLE OF CONTENTS</a>`);
-
 	if (block.el[0].txt !== undefined) return;
-
-	//Handles float for pc2 blocks
-	let float = "";
 
 	if (block.att.ipcnum === "2") {
 		if (block.att.fipcblk) {
 			let amt = parseFloat(block.att.bx) + parseFloat(block.att.bsx) - parseFloat(page[blockIndex + 1].att.bx);
-
 			if (amt > 20) amt = 12;
 			margin += `margin-right: ${Math.abs(amt)}pt;`;
 		}
@@ -23,22 +19,11 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 		display = `display: inline-block;`;
 	}
 
-	//Handle graphics here
-	if (block.att.type === "graphic") {
-		return;
-	}
+	if (parseInt(block.att.bsx) > 612) width = `width: 100%;`;
 
-	//Margin top for frills
+	//Margin top for frills (temp)
 	if (block.att.type !== "main" && block.att.bisy < 300) {
 		margin = `margin-top: 10pt;`;
-	} else {
-		if (blockIndex > 0) {
-			if (page[blockIndex - 1].att.hasOwnProperty("by") && block.att.hasOwnProperty("by")) {
-				let diff = 0;
-				if (page[blockIndex - 1].att.type === "frill") diff = parseFloat(block.att.by) - (parseFloat(page[blockIndex - 1].att.by) + parseFloat(page[blockIndex - 1].att.bsy) + parseFloat(page[blockIndex - 1].att.vjerr));
-				// if (diff < 100 && block.att.ipcnum !== "2") margin += `margin-top: ${diff}pt;`;
-			}
-		}
 	}
 
 	//Check for sumbox frill
@@ -50,11 +35,10 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 	if (page.length > 0) if (page[1].att.bsy > 500 && page[1].att.type === "frill" && block.att.type === "main") pageNum = 1;
 
 	//Check previous block for spacing
-
 	if (pageNum !== undefined) {
-		builtBlock = `<div class="block-${block.att.type}" style="${display} width: ${parseFloat(block.att.bsx) + 16}pt; ${createSumbox(page[pageNum].el)} margin: auto; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
+		builtBlock = `<div class="block-${block.att.type}" style="${display} ${width} ${createSumbox(page[pageNum].el)} margin: auto; vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	} else {
-		builtBlock = `<div class="block-${block.att.type}" style="${display}width: ${parseFloat(block.att.bsx) + 16}pt; margin: auto; ${float} vertical-align: top; ${margin}">${options.fn(block)}</div>`;
+		builtBlock = `<div class="block-${block.att.type}" style="${display} ${width} margin: auto;  vertical-align: top; ${margin}">${options.fn(block)}</div>`;
 	}
 
 	return new Handlebars.SafeString(builtBlock);

@@ -3,12 +3,12 @@ const Handlebars = require("handlebars");
 const style = require("./_style");
 const help = require("./index");
 
-Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, options) => {
+Handlebars.registerHelper("create_tags", (rootStyle, page, block, group, gindex, options) => {
 	if (group.att === undefined) {
 		return;
 	}
 	// let generatedCSS = style.generatedCSS(rootStyle, group.att.style);
-	let inlineCSS = style.inlineCSS(rootStyle, block, group, gindex);
+	let inlineCSS = style.inlineCSS(rootStyle, page, block, group, gindex);
 	let blockTag = "";
 	let hasInsert = false;
 
@@ -60,7 +60,7 @@ const createTable = (block, blockIndex, frame, gIndex, tgroup, options) => {
 	}
 
 	//Calculates top margin based on prev group
-	margin += findTopMargin(block, tgroup, gIndex);
+	margin += findTopMarginTable(block, tgroup, gIndex);
 
 	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt; `;
 
@@ -104,7 +104,7 @@ const findTraceInTable = tgroup => {
 	return hasInsert;
 };
 
-const findTopMargin = (block, tgroup, gIndex) => {
+const findTopMarginTable = (block, tgroup, gIndex) => {
 	let last = "";
 	let yfinal = 0;
 	let marginTop = 0;
@@ -120,7 +120,7 @@ const findTopMargin = (block, tgroup, gIndex) => {
 	if (parseFloat(tgroup.att.tbyposn) - yfinal === 0) {
 		marginTop = 10;
 	} else {
-		marginTop = parseFloat(tgroup.att.tbyposn) - yfinal;
+		if (tgroup.att.tbyposn > 0) marginTop = parseFloat(tgroup.att.tbyposn) - yfinal;
 	}
 
 	return `margin-top: ${marginTop}pt;`;
