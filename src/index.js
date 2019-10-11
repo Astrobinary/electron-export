@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { ipcRenderer as ipc, remote, shell } from "electron";
 import Handlebars from "handlebars";
 import fs from "fs";
+import sanitizeHtml from "sanitize-html";
 import pretty from "pretty";
 import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
@@ -57,9 +58,15 @@ const Renderer = () => {
 			stream = fs.createWriteStream(path.current);
 
 			stream.once("open", () => {
-				const html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
+				let html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
+				let clean = sanitizeHtml(html, {
+					recognizeSelfClosing: true,
+					allowedTags: false,
+					allowedAttributes: false
+				});
+
 				stream.end(
-					pretty(html, {
+					pretty(clean, {
 						ocd: true
 					})
 				);
