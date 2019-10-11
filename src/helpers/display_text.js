@@ -215,6 +215,14 @@ const handleBlockRules = (rootStyle, block, group, line, t, tIndex) => {
 		margin_left = `margin-left: ${parseFloat(line.att.xfinal) - parseFloat(line.att.lindent)}pt;`;
 	}
 
+	// if (block.att.type === "main")
+	// 	rootStyle.forEach(element => {
+	// 		if (element.att.name === group.att.style) {
+	// 			margin_bot = `margin-bottom: -${parseFloat(element.att.size) + parseFloat(t.att.y)}pt;`;
+	// 			return;
+	// 		}
+	// 	});
+
 	return `<div class="rule" style="border-bottom: ${t.att.d}pt solid ${t.att.color}; display: ${display}; ${width} ${margin_top} ${margin_left} ${margin_bot}"> </div>`;
 };
 

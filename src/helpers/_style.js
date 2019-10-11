@@ -6,6 +6,8 @@ module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) =>
 	let style = "";
 	let rootatt;
 
+	if (group === undefined) console.log("what");
+
 	if (lineIndex === undefined) lineIndex = 0;
 
 	if (group.hasOwnProperty("el")) {
@@ -68,7 +70,13 @@ module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) =>
 			} else {
 				if (group.hasOwnProperty("att")) {
 					if (group.att.hasOwnProperty("style")) {
-						if (!group.att.style.includes("calc.")) style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+						if (!group.att.style.includes("calc.")) {
+							if (parseFloat(att.yfinal) < 10) {
+								style += `padding-top: ${parseFloat(att.yfinal)}pt;`;
+							} else {
+								style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+							}
+						}
 					} else {
 						style += `padding-top: ${parseFloat(att.prelead)}pt;`;
 					}
@@ -158,10 +166,6 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 		if (parseInt(att.size) > 1) styles += `font-size: ${att.size}pt; line-height: ${parseFloat(att.size) + parseFloat(line.att.ldextra)}pt;`;
 	}
 
-	//If broken with a <qa> and alignment is different; has to be last T in an line element
-	if (group.el[0].att.qdtype !== line.att.qdtype && line.att.quadset && line.el.length - 1 === tIndex && text.length > 1 && line.att.qdtype !== "forcej") {
-		if (/\S/.test(text)) if (group.el[lineIndex - 1].att.quadset === "true") text = `<div style="text-align: ${line.att.qdtype};">${text}</div>`;
-	}
 	//Handles strikes and double underlines
 	if (t.att.hasOwnProperty("ul8")) styles += `text-decoration: line-through;`;
 	if (t.att.hasOwnProperty("ul10")) styles += `border-bottom: 3px double;`;
@@ -198,6 +202,16 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	//Wraps text around page ref link
 	if (tIndex > 1 && t.att.cgt) if (group.el[lineIndex].el[tIndex - 1].name === "xref") text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
 
+	//If broken with a <qa> and alignment is different; has to be last T in an line element
+	if (group.el[0].att.qdtype !== line.att.qdtype && line.att.quadset && text.length > 1 && line.att.qdtype !== "forcej") {
+		if (line.el.length > 1) {
+			if (tIndex === 0) text = `<div style="text-align: ${line.att.qdtype}; padding-top: ${line.att.prelead}pt;">${text}`;
+			if (line.el.length - 1 === tIndex) text += `</div>`;
+		} else {
+			text = `<div style="text-align: ${line.att.qdtype}; padding-top: ${line.att.prelead}pt;">${text}</div>`;
+		}
+	}
+
 	return text;
 };
 
@@ -233,6 +247,8 @@ module.exports.handleInstructions = el => {
 	if (el.ins === "qa") return `<br/>`;
 	if (el.ins === "l") return `<br/>`;
 	if (el.ins === "lz") return `&nbsp;`;
+
+	if (el.ins === "xix") return `<div>`;
 
 	if (el.ins.includes("link;")) return `<a href="${el.ins.slice(5)}">`;
 	if (el.ins === "/link") return `</a>`;

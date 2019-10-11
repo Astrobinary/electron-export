@@ -1,7 +1,5 @@
 const style = require("./_style");
-const { remote } = require("electron");
 const help = require("./index");
-const cmd = require("node-cmd");
 
 module.exports.cellContainer = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
 	const colspec = colspecs[col.att.col - 1];
@@ -89,10 +87,13 @@ const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) =
 	if (shading !== undefined) rowStyle.push(`background-color: ${help.toRGB(shading)};`);
 
 	//Cell Hrule
-	if (row.att.rthk === undefined) row.att.rthk = 1;
-	if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
-	if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
-	if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
+
+	if (col.att.rule_info !== undefined) {
+		if (row.att.rthk === undefined) row.att.rthk = 1;
+		if (row.att.rcolor === undefined) row.att.rcolor = "black";
+		if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${row.att.rcolor};`);
+		if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${row.att.rcolor};`);
+	}
 
 	//Vrule
 	if (parseFloat(colspec.att.tbcrrule) > 0 && !hasXvrule(col)) {
@@ -212,7 +213,11 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x)}pt;`);
 							}
 						} else if (t.hasOwnProperty("el")) {
-							divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw)}pt;`);
+							if (isLast && parseInt(line.att.lnwidth) > colspec.att.tbmxalnw && col.att.rule_info === undefined) {
+								divStyle.push(`max-width: ${parseFloat(line.att.lnwidth)}pt;`);
+							} else {
+								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw)}pt;`);
+							}
 						}
 					}
 

@@ -5,14 +5,16 @@ const help = require("./index");
 
 Handlebars.registerHelper("create_group", (rootStyle, page, block, group, gindex, options) => {
 	if (group.att === undefined) return;
+	if (group.el === undefined) return;
 
-	let inlineCSS = style.inlineCSS(rootStyle, page, block, group, gindex);
+	let inlineCSS = style.inlineCSS(rootStyle, page, block, group, gindex, 0);
+
 	let blockTag = "";
 	let hasInsert = false;
 
 	//Checks for hanging elements such as bullets, ftnotes, etc.
 	if (help.hasHang(group.el)) {
-		blockTag = createHangTag(group.att.style, options);
+		blockTag = createHangTag(group, group.att.style, options);
 		return new Handlebars.SafeString(blockTag);
 	}
 
@@ -31,8 +33,16 @@ Handlebars.registerHelper("create_group", (rootStyle, page, block, group, gindex
 	return new Handlebars.SafeString(blockTag);
 });
 
-const createHangTag = (tag, options) => {
-	const tableStart = `<table class="${tag}" width="100%" style="border-collapse: collapse;">`;
+const createHangTag = (group, tag, options) => {
+	let top = "";
+
+	if (parseFloat(group.el[0].att.yfinal) < 10) {
+		top = `margin-top: ${parseFloat(group.el[0].att.yfinal)}pt;`;
+	} else {
+		top = `margin-top: ${parseFloat(group.el[0].att.prelead)}pt;`;
+	}
+
+	const tableStart = `<table class="${tag}" width="100%" style="${top} border-collapse: collapse;">`;
 	const tableEnd = `<tr style="vertical-align: top;">${options.fn(this)}</tr></table>`;
 
 	const table = tableStart + tableEnd;
