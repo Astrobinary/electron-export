@@ -29,10 +29,6 @@ const Buttonbar = props => {
 	};
 	const openSettings = () => {};
 
-	const startExport = () => {
-		ipc.send("getXML", props.newpath.current);
-	};
-
 	return (
 		<div className="Buttonbar">
 			<div className={`btn-contain ${config.edgarShade ? "selected" : ""}`} onClick={e => toggleEDGAR(e)}>
@@ -70,7 +66,7 @@ const Buttonbar = props => {
 				settings
 			</div>
 
-			<div className="btn-contain double selected" onClick={() => startExport()}>
+			<div className="btn-contain double selected" onClick={() => props.startProcess()}>
 				<div className="icon">
 					<FaPlay />
 				</div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { ipcRenderer as ipc, remote, shell } from "electron";
 import Handlebars from "handlebars";
@@ -18,7 +18,13 @@ import "./helpers";
 import "./global.scss";
 
 const Renderer = () => {
+	const [isLoading, setIsLoading] = useState(false);
 	let path = useRef();
+
+	const startProcess = () => {
+		setIsLoading(true);
+		ipc.send("getXML", path.current);
+	};
 
 	useEffect(() => {
 		let uniqueFolder = remote.getGlobal("jobNumber");
@@ -31,11 +37,12 @@ const Renderer = () => {
 
 		ipc.on("saveLocation", (e, newPath) => {
 			path.current = newPath;
-
 			e.sender.send("debugRelay", `\nNew save path selected: ${path.current}\n`);
 		});
+	});
 
-		ipc.on("complie", e => {
+	useEffect(() => {
+		ipc.once("complie", e => {
 			let folder = remote.getGlobal("saveLocation");
 
 			if (!fs.existsSync(folder)) {
@@ -72,17 +79,35 @@ const Renderer = () => {
 				);
 			});
 
-			e.sender.send("debugRelay", `HTML created at: ${path.current}`);
 			shell.showItemInFolder(path.current);
+			e.sender.send("debugRelay", `HTML created at: ${path.current}`);
+			setIsLoading(false);
+			return;
 		});
-	});
+
+		return () => {
+			ipc.removeAllListeners("complie");
+		};
+	}, [isLoading]);
 
 	return (
 		<React.Fragment>
 			<Titlebar />
 			<JobInfoBar />
 			<DebugWindow />
-			<Buttonbar newpath={path} />
+			{isLoading ? (
+				<div className="loading-contain">
+					<div className="longfazers">
+						<span />
+						<span />
+						<span />
+						<span />
+					</div>
+					<h1>Creating HTML</h1>
+				</div>
+			) : (
+				<Buttonbar newpath={path} startProcess={startProcess} />
+			)}
 			<Statusbar />
 		</React.Fragment>
 	);

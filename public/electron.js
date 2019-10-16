@@ -67,8 +67,8 @@ const createWindow = () => {
 
 // CLS_Genfin/GRP_house/JOB_nt10002728x1_424b5-FILED
 const setJobLocation = () => {
-	// let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_Broadridge/JOB_bp97933x1_def14a-filed" : process.argv[1];
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_genfin/GRP_house/JOB_s002392x7_s1-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_Broadridge/JOB_bp97933x1_def14a-filed" : process.argv[1];
+	// let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_training/GRP_brandon/JOB_HTML_TABLE" : process.argv[1];
 
 	let path = arg1.split("/");
 	path = path.slice(4, path.length);
@@ -104,12 +104,12 @@ ipcMain.on("getXML", (e, path) => {
 
 	global.saveLocation = folder;
 
-	if (isDev && fs.existsSync(`${global.jobLocation}\\tout.xml`)) {
-		console.log("XML Already generated.");
-		e.sender.send("complie");
+	// if (isDev && fs.existsSync(`${global.jobLocation}\\tout.xml`)) {
+	// 	console.log("XML Already generated.");
+	// 	e.sender.send("complie");
 
-		return;
-	}
+	// 	return;
+	// }
 
 	let cmd = spawn("divxml -job -ncrd -wpi -xsh", [], { shell: true, cwd: global.jobLocation });
 
