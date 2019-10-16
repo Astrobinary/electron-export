@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import { ipcRenderer as ipc, remote, shell } from "electron";
 import Handlebars from "handlebars";
 import fs from "fs";
+import sanitizeHtml from "sanitize-html";
 import pretty from "pretty";
 import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
@@ -57,9 +58,15 @@ const Renderer = () => {
 			stream = fs.createWriteStream(path.current);
 
 			stream.once("open", () => {
-				const html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
+				let html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
+				let clean = sanitizeHtml(html, {
+					recognizeSelfClosing: true,
+					allowedTags: false,
+					allowedAttributes: false
+				});
+
 				stream.end(
-					pretty(html, {
+					pretty(clean, {
 						ocd: true
 					})
 				);
@@ -109,23 +116,23 @@ const template = Handlebars.compile(`
 	
 		{{#each this.el}}
 			<div class="page" style="width: 612pt; text-align: center; margin: auto; position: relative;">
-				{{#gather_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
+				{{#sort_blocks this.el}} {{!-- Each stream, reduced to array of blocks --}}
 					{{#each this}} {{!-- Each block --}}
 
 						{{#create_blocks ../this this @index}} {{!-- Generates block elements --}}
 
 							{{#each this.el}} {{!-- Each group --}}
 								
-								{{~#create_tags @root.el.0.el.1.el ../this this @index ~}}
+								{{~#create_group @root.el.0.el.1.el ../../this ../this this @index ~}}
 									{{~ display_text @root.el.0.el.1.el ../../../../this ../../this ../this ~}}
-								{{/create_tags}}
+								{{/create_group}}
 
 							{{/each}}
 
 						{{/create_blocks}}
 
 					{{/each}}
-				{{/gather_blocks}}
+				{{/sort_blocks}}
 			</div>
 			<hr style="page-break-after: always; width: 612pt; margin-top: 20pt; margin-bottom: 20pt; border: 0px; height: 3px; background-color: black" />
 		{{/each}}

@@ -1,11 +1,12 @@
-// const { remote } = require("electron");
 const help = require("./index");
 
 //Created style based on element attributes
-module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
+module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) => {
 	let att;
 	let style = "";
 	let rootatt;
+
+	if (group === undefined) console.log("what");
 
 	if (lineIndex === undefined) lineIndex = 0;
 
@@ -44,29 +45,42 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 		}
 	}
 
+	//Right indent
 	if (group.el[0].att.rindent > 0) style += `padding-right: ${att.rindent}pt;`;
 
-	//Right indent
 	style += `text-align: ${att.qdtype};`;
 
-	//Add margin if not first block in group (used for pc2)
-	// if (block.att.ipcnum === "2" && (block.att.fipcblk || block.att.lipcblk)) {
-	// 	if (att.prelead === "0") {
-	// 		style += `margin-top: ${parseFloat(att.prelead) + parseFloat(att.yfinal)}pt;`;
-	// 	} else {
-	// 		style += `padding-top: ${parseFloat(att.prelead)}pt;`;
-	// 	}
-	// } else {
 	if (gindex === 0 && group.att.class === "ftnote") {
 		style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 	} else {
 		if (parseFloat(att.prelead) < 0) {
-			style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+			//Don't add negative top margin to covers
+			if (page !== undefined) {
+				if (page.hasOwnProperty("type")) {
+					if (!page.att.plname.includes("cov")) {
+						style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+					}
+				} else {
+					style += `margin-top: ${parseFloat(att.prelead)}pt;`;
+				}
+			}
 		} else {
 			if (parseFloat(att.prelead) === 0) {
 				if (gindex === 0 && lineIndex === 0 && !att.tbsa) style += `padding-top: ${parseFloat(att.yfinal)}pt;`;
 			} else {
-				style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+				if (group.hasOwnProperty("att")) {
+					if (group.att.hasOwnProperty("style")) {
+						if (!group.att.style.includes("calc.")) {
+							if (parseFloat(att.yfinal) < 10) {
+								style += `padding-top: ${parseFloat(att.yfinal)}pt;`;
+							} else {
+								style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+							}
+						}
+					} else {
+						style += `padding-top: ${parseFloat(att.prelead)}pt;`;
+					}
+				}
 			}
 		}
 	}
@@ -90,6 +104,8 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 		} else if (rootatt.font.includes("Helvetica")) {
 			fontFamily = "Helvetica";
 		} else {
+			console.log(rootatt.font);
+
 			fontFamily = "Arial";
 		}
 
@@ -107,7 +123,6 @@ module.exports.inlineCSS = (rootStyle, block, group, gindex, lineIndex) => {
 		}
 
 		let fontSize = "";
-
 		if (parseInt(rootatt.size) > 1) fontSize = `font-size: ${rootatt.size}pt;`;
 
 		style += `${fontSize} ${lineHeight} font-family: ${fontFamily};`;
@@ -153,10 +168,6 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 		if (parseInt(att.size) > 1) styles += `font-size: ${att.size}pt; line-height: ${parseFloat(att.size) + parseFloat(line.att.ldextra)}pt;`;
 	}
 
-	//If broken with a <qa> and alignment is different; has to be last T in an line element
-	if (group.el[0].att.qdtype !== line.att.qdtype && line.att.quadset && line.el.length - 1 === tIndex && text.length > 1 && line.att.qdtype !== "forcej") {
-		if (/\S/.test(text)) if (group.el[lineIndex - 1].att.quadset === "true") text = `<div style="text-align: ${line.att.qdtype};">${text}</div>`;
-	}
 	//Handles strikes and double underlines
 	if (t.att.hasOwnProperty("ul8")) styles += `text-decoration: line-through;`;
 	if (t.att.hasOwnProperty("ul10")) styles += `border-bottom: 3px double;`;
@@ -193,169 +204,35 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	//Wraps text around page ref link
 	if (tIndex > 1 && t.att.cgt) if (group.el[lineIndex].el[tIndex - 1].name === "xref") text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
 
-	// if (remote.getGlobal("marked"))
-	// 	if (t.att.trace === "insert" && !t.att.style.includes("unknown")) {
-	// 		text = `<R style="color: purple;">${text}</R>`;
-	// 	}
+	//If broken with a <qa> and alignment is different; has to be last T in an line element
+	if (group.el[0].att.qdtype !== line.att.qdtype && group.el[0].att.qdtype !== "justify" && line.att.quadset && text.length > 1 && line.att.qdtype !== "forcej") {
+		if (line.el.length > 1) {
+			if (tIndex === 0) text = `<div style="text-align: ${line.att.qdtype}; padding-top: ${line.att.prelead}pt;">${text}`;
+			if (line.el.length - 1 === tIndex) text += `</div>`;
+		} else {
+			if (parseInt(line.att.prelead) < 0) {
+				text = `<div style="text-align: ${line.att.qdtype}; margin-top: ${line.att.prelead}pt; padding-left: ${line.att.lindent}pt;">${text}</div>`;
+			} else {
+				text = `<div style="text-align: ${line.att.qdtype}; padding-top: ${line.att.prelead}pt; padding-left: ${line.att.lindent}pt;">${text}</div>`;
+			}
+		}
+	}
 
 	return text;
 };
 
-//Style related to table rows (TD)
-module.exports.rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) => {
-	const styleClass = col.el[0].att.style;
-	const firstLine = col.el[0].el[0];
-	const isLast = this.isLastColumn(tgroup, col);
-
-	let rowStyle = [];
-	let rootAtt;
-
-	rootStyle.forEach(item => {
-		if (item.att.name === styleClass) {
-			rootAtt = item.att;
-			return;
-		}
+module.exports.hasStyleProperty = (arr, target) => {
+	return arr.some(style => {
+		return style.split(":")[0] === target;
 	});
-
-	if (!colspec.hasOwnProperty("att")) return;
-
-	if (colspec.att.tbclgut > 0) {
-		//Cell Header rows
-		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows)) {
-			if (tgroup.att.tgroupstyle === "fintab" && tgroup.att.cols === col.att.col) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
-
-			if (isLast) rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
-
-			if (col.att.namest !== undefined) {
-				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
-					rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
-				}
-			} else {
-				if (tgroup.att.cols !== col.att.col) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
-			}
-		}
-	}
-
-	//Cell text size
-	if (parseInt(rootAtt.size) > 1) rowStyle.push(`font-size: ${rootAtt.size}pt;`);
-
-	//Cell line height
-	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
-
-	//Cell width
-	if (isLast || col.att.nameend) {
-		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
-	} else {
-		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${colspec.att.colwidth}pt;`);
-	}
-
-	//Row gutter
-	if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows)) {
-		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.hdr_rows)) {
-			if (parseInt(row.att.row_gutter) <= 6) {
-				rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
-			}
-		}
-		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.mx_rows)) {
-			if (parseInt(row.att.row_gutter) <= 6) {
-				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
-			}
-		}
-	} else {
-		if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
-	}
-
-	let shading = this.getShading(col);
-
-	if (shading !== undefined) rowStyle.push(`background-color: ${help.toRGB(shading)};`);
-
-	//Cell Hrule
-	if (row.att.rthk === undefined) row.att.rthk = 1;
-	if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
-	if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
-	if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${help.toRGB(row.att["rcolor-cmyk"])};`);
-
-	//Vrule
-	if (parseFloat(colspec.att.tbcrrule) > 0 && !this.hasXvrule(col)) {
-		if (colspec.att.tbcrrule === "0.5") colspec.att.tbcrrule = 1;
-		rowStyle.push(`border-right: ${colspec.att.tbcrrule}pt solid ${help.toRGB(colspec.att["tbcr_rcolor-cmyk"])};`);
-	} else if (colspecSpan !== "") {
-		if (parseFloat(colspecSpan.att.tbcrrule) > 0 && !this.hasXvrule(col)) {
-			if (colspecSpan.att.tbcrrule === "0.5") colspecSpan.att.tbcrrule = 1;
-			rowStyle.push(`border-right: ${colspecSpan.att.tbcrrule}pt solid ${help.toRGB(colspecSpan.att["tbcr_rcolor-cmyk"])};`);
-		}
-	}
-
-	return rowStyle.join(" ");
-};
-
-module.exports.isLastColumn = (tgroup, col) => {
-	if (tgroup.att.cols === col.att.col) return true;
-	if (!col.att.hasOwnProperty("namest")) return false;
-	if (parseInt(tgroup.att.cols) === parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) return true;
-
-	return false;
-};
-
-module.exports.getShading = col => {
-	let shadeColor;
-
-	col.el.forEach((group, groupIndex) => {
-		group.el.forEach((line, lineIndex) => {
-			if (line.el === undefined) return;
-			line.el.forEach((t, tIndex) => {
-				if (t.name === "shape") {
-					shadeColor = t.att["color-cmyk"];
-					return shadeColor;
-				}
-			});
-		});
-	});
-
-	return shadeColor;
-};
-
-const getMaxWidth = col => {
-	let max = 0;
-
-	col.el.forEach(group => {
-		let maxWidth = 0;
-		group.el.forEach(line => {
-			let currentWidth = 0;
-			if (line.att.qdtype !== "center" && group.el.length > 1) currentWidth = parseFloat(line.att.lnwidth);
-			maxWidth = Math.max(maxWidth, currentWidth);
-		});
-		return (max = maxWidth);
-	});
-	return max;
-};
-
-module.exports.hasCalHang = col => {
-	col.el.forEach((group, groupIndex) => {
-		group.el.forEach((line, lineIndex) => {
-			if (line.el === undefined) return;
-			if (line.el.ins === "cal;rhang") return true;
-			line.el.forEach((t, tIndex) => {
-				if (t.name === "t" && t.el !== undefined) {
-					t.el.forEach((el, elIndex) => {
-						if (el.type === "instruction") {
-							if (el.ins === "cal;rhang") return true;
-						}
-					});
-				}
-			});
-		});
-	});
-
-	return false;
 };
 
 module.exports.hasBreakMacro = line => {
 	let hasBreak = false;
 
-	line.el.forEach((t, tIndex) => {
+	line.el.forEach(t => {
 		if (t.name === "t" && t.el !== undefined) {
-			t.el.forEach((el, elIndex) => {
+			t.el.forEach(el => {
 				if (el.type === "instruction") {
 					if (el.ins === "qa" || el.ins === "l") hasBreak = true;
 					return hasBreak;
@@ -372,79 +249,19 @@ module.exports.hasBreakMacro = line => {
 	return hasBreak;
 };
 
-module.exports.hasXvrule = col => {
-	let hasVrule = false;
-
-	col.el.forEach((group, tIndex) => {
-		group.el.forEach((line, tIndex) => {
-			line.el.forEach((t, tIndex) => {
-				if (t.name === "t" && t.el !== undefined) {
-					t.el.forEach((el, elIndex) => {
-						if (el.type === "instruction") {
-							if (el.ins === "xvrule") hasVrule = true;
-							return hasVrule;
-						}
-					});
-				} else {
-					if (t.type === "instruction") {
-						if (t.ins === "xvrule") hasVrule = true;
-						return hasVrule;
-					}
-				}
-			});
-		});
-	});
-
-	return hasVrule;
-};
-
-module.exports.hasStyleProperty = (arr, target) => {
-	let has = false;
-
-	arr.forEach(style => {
-		const key = style.split(":")[0];
-		if (key === target) has = true;
-	});
-
-	return has;
-};
-
-module.exports.getValueMinMax = (arr, target, current, higher) => {
-	let prev;
-
-	arr.forEach(item => {
-		if (item.includes(target)) {
-			console.log("here");
-			prev = item.split(":")[1];
-
-			// prev = parseFloat(item.slice(target.length + 1, -3));
-
-			if (parseFloat(current) < parseFloat(prev)) {
-				return current;
-			} else {
-				return prev;
-			}
-		} else {
-			console.log(current);
-			return current;
-		}
-	});
-
-	return current;
-};
-
 module.exports.handleInstructions = el => {
 	if (el.ins === "qa") return `<br/>`;
 	if (el.ins === "l") return `<br/>`;
-
 	if (el.ins === "lz") return `&nbsp;`;
+
+	if (el.ins === "xix") return `<div>`;
 
 	if (el.ins.includes("link;")) return `<a href="${el.ins.slice(5)}">`;
 	if (el.ins === "/link") return `</a>`;
+
 	if (el.ins === "sup") return `<sup style="line-height: 0;">`;
 	if (el.ins === "reset") return `</sup>`;
 
-	// "ins": "ru;%bsx;4q"
 	if (el.ins.includes("ru;")) {
 		const params = el.ins.split(";");
 		return `<div style="border-bottom: ${params[2].replace(/\D+/gm, "")}pt solid black;">&nbsp;</div>`;

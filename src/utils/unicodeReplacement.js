@@ -1,7 +1,7 @@
 import fs from "fs";
 const config = JSON.parse(fs.readFileSync(`N:\\sd_liz\\unicode_config.json`));
 
-const convertUnicode = xml => {
+const unicodeReplacement = xml => {
 	Object.keys(config).forEach(function(key, index) {
 		let regex = new RegExp(key, "gm");
 		try {
@@ -13,4 +13,4 @@ const convertUnicode = xml => {
 
 	return xml;
 };
-export default convertUnicode;
+export default unicodeReplacement;

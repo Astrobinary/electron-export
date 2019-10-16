@@ -3,24 +3,24 @@ const Handlebars = require("handlebars");
 const style = require("./_style");
 const help = require("./index");
 
-Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, options) => {
-	if (group.att === undefined) {
-		return;
-	}
-	// let generatedCSS = style.generatedCSS(rootStyle, group.att.style);
-	let inlineCSS = style.inlineCSS(rootStyle, block, group, gindex);
+Handlebars.registerHelper("create_group", (rootStyle, page, block, group, gindex, options) => {
+	if (group.att === undefined) return;
+	if (group.el === undefined) return;
+
+	let inlineCSS = style.inlineCSS(rootStyle, page, block, group, gindex, 0);
+
 	let blockTag = "";
 	let hasInsert = false;
 
 	//Checks for hanging elements such as bullets, ftnotes, etc.
 	if (help.hasHang(group.el)) {
-		blockTag = createHangTag(inlineCSS, group.att.style, options);
+		blockTag = createHangTag(group, group.att.style, options);
 		return new Handlebars.SafeString(blockTag);
 	}
 
 	//Checks if current group is a table
 	if (group.name === "table") {
-		blockTag = createTable(block, options.data._parent.index, group, gindex, group.el[0], options);
+		blockTag = createTable(block, group, gindex, group.el[0], options);
 		return new Handlebars.SafeString(blockTag);
 	}
 
@@ -33,8 +33,16 @@ Handlebars.registerHelper("create_tags", (rootStyle, block, group, gindex, optio
 	return new Handlebars.SafeString(blockTag);
 });
 
-const createHangTag = (inlineCSS, tag, options) => {
-	const tableStart = `<table class="${tag}" width="100%" style="border-collapse: collapse;">`;
+const createHangTag = (group, tag, options) => {
+	let top = "";
+
+	if (parseFloat(group.el[0].att.yfinal) < 10) {
+		top = `margin-top: ${parseFloat(group.el[0].att.yfinal)}pt;`;
+	} else {
+		top = `margin-top: ${parseFloat(group.el[0].att.prelead)}pt;`;
+	}
+
+	const tableStart = `<table class="${tag}" width="100%" style="${top} border-collapse: collapse;">`;
 	const tableEnd = `<tr style="vertical-align: top;">${options.fn(this)}</tr></table>`;
 
 	const table = tableStart + tableEnd;
@@ -42,10 +50,10 @@ const createHangTag = (inlineCSS, tag, options) => {
 	return table;
 };
 
-const createTable = (block, blockIndex, frame, gIndex, tgroup, options) => {
+const createTable = (block, frame, gIndex, tgroup, options) => {
+	let hasInsert = false;
 	let margin = "";
 	let border = "";
-	let hasInsert = false;
 	let table = "";
 
 	if (remote.getGlobal("marked")) hasInsert = findTraceInTable(tgroup);
@@ -53,22 +61,22 @@ const createTable = (block, blockIndex, frame, gIndex, tgroup, options) => {
 	margin += `margin: auto;`;
 
 	if (frame.att.frame !== "none") {
-		if (frame.att.topbox) border += `border-top: ${frame.att.topbox}pt solid ${frame.att.btcolor};`;
-		if (frame.att.botbox) border += `border-bottom: ${frame.att.botbox}pt solid ${frame.att.bbcolor};`;
-		if (frame.att.lsidbox) border += `border-left: ${frame.att.lsidbox}pt solid ${frame.att.blcolor};`;
-		if (frame.att.rsidbox) border += `border-right: ${frame.att.rsidbox}pt solid ${frame.att.brcolor};`;
+		if (frame.att.topbox) border += `border-top: ${parseFloat(frame.att.topbox) > 0.5 ? frame.att.topbox : 1}pt solid ${frame.att.btcolor};`;
+		if (frame.att.botbox) border += `border-bottom: ${parseFloat(frame.att.botbox) > 0.5 ? frame.att.botbox : 1}pt solid ${frame.att.bbcolor};`;
+		if (frame.att.lsidbox) border += `border-left: ${parseFloat(frame.att.lsidbox) > 0.5 ? frame.att.lsidbox : 1}pt solid ${frame.att.blcolor};`;
+		if (frame.att.rsidbox) border += `border-right: ${parseFloat(frame.att.rsidbox) > 0.5 ? frame.att.rsidbox : 1}pt solid ${frame.att.brcolor};`;
 	}
 
 	//Calculates top margin based on prev group
-	margin += findTopMargin(block, tgroup, gIndex);
+	margin += findTopMarginTable(block, tgroup, gIndex);
+
+	let width = `width: ${tgroup.att.tbwidth}pt;`;
+
+	if (parseFloat(block.att.bsx) - parseFloat(tgroup.att.tbwidth) < 10) {
+		width = `width: 100%;`;
+	}
 
 	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt; `;
-
-	//Added +5 workaroudn for adding +5 padding to last column
-
-	let width = `width: 100%;`;
-
-	if (tgroup.att.tbxposn > 0) width = `width: calc(100% - ${parseInt(tgroup.att.tbxposn)}pt);`;
 
 	table = `<table class="${tgroup.att.tgroupstyle}" style="${width} ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
 
@@ -104,7 +112,7 @@ const findTraceInTable = tgroup => {
 	return hasInsert;
 };
 
-const findTopMargin = (block, tgroup, gIndex) => {
+const findTopMarginTable = (block, tgroup, gIndex) => {
 	let last = "";
 	let yfinal = 0;
 	let marginTop = 0;
@@ -120,7 +128,7 @@ const findTopMargin = (block, tgroup, gIndex) => {
 	if (parseFloat(tgroup.att.tbyposn) - yfinal === 0) {
 		marginTop = 10;
 	} else {
-		marginTop = parseFloat(tgroup.att.tbyposn) - yfinal;
+		if (tgroup.att.tbyposn > 0) marginTop = parseFloat(tgroup.att.tbyposn) - yfinal;
 	}
 
 	return `margin-top: ${marginTop}pt;`;

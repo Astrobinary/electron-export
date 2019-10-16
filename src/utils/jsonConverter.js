@@ -1,7 +1,7 @@
 import isDev from "electron-is-dev";
 import fs from "fs";
 import convert from "xml-js";
-import convertUnicode from "./htmlUnicode";
+import unicodeReplacement from "./unicodeReplacement";
 
 const generateJSON = path => {
 	const rawXML = fs.readFileSync(`${path}\\tout.xml`, "utf8");
@@ -21,7 +21,7 @@ const generateJSON = path => {
 		instructionKey: "ins"
 	};
 
-	let results = convert.xml2json(convertUnicode(xml), options);
+	let results = convert.xml2json(unicodeReplacement(xml), options);
 
 	const removeWithComma = /.\{([\s].*?)"type": "text",[\s\S].*"txt": "\\r.*"[\s\S].*\},\n\s*/gm;
 	const removeNoComma = /.\},[\s].*\{([\s].*?)"type": "text",[\s\S].*"txt": "\\r.*"[\s\S].*\}\n\s*/gm;

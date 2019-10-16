@@ -1,9 +1,12 @@
 const Handlebars = require("handlebars");
+const fs = require("fs");
+const cmd = require("node-cmd");
+const { remote } = require("electron");
 
 //Gathers all custom helpers for handlebars
-exports.gather_blocks = require("./gather_blocks");
+exports.gather_blocks = require("./sort_blocks");
 exports.create_blocks = require("./create_blocks");
-exports.create_tags = require("./create_tags");
+exports.create_tags = require("./create_group");
 exports.display_text = require("./display_text");
 
 //Outputs current context
@@ -29,6 +32,13 @@ exports.onlyType = (arr, type) => {
 	return arr.filter(item => {
 		return item.type === type;
 	});
+};
+
+exports.convertImage = t => {
+	const folder = remote.getGlobal("saveLocation");
+	if (!fs.existsSync(`${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg`)) {
+		cmd.get(`n: & cd N:\\xz\\gs & gs.exe -dDEVICEWIDTHPOINTS=${t.att.w} -dDEVICEHEIGHTPOINTS=${t.att.h} -sDEVICE=jpeg -dJPEGQ=100 -r300 -o ${folder}\\${t.att.id.substring(0, t.att.id.length - 4)}.jpg N:\\graphics\\house\\${t.att.id}`);
+	}
 };
 
 //Checks t if contains hang
