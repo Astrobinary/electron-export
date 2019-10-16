@@ -51,9 +51,9 @@ const createHangTag = (group, tag, options) => {
 };
 
 const createTable = (block, frame, gIndex, tgroup, options) => {
+	let hasInsert = false;
 	let margin = "";
 	let border = "";
-	let hasInsert = false;
 	let table = "";
 
 	if (remote.getGlobal("marked")) hasInsert = findTraceInTable(tgroup);
@@ -70,10 +70,13 @@ const createTable = (block, frame, gIndex, tgroup, options) => {
 	//Calculates top margin based on prev group
 	margin += findTopMarginTable(block, tgroup, gIndex);
 
-	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt; `;
+	let width = `width: ${tgroup.att.tbwidth}pt;`;
 
-	let width = `width: 100%;`;
-	if (tgroup.att.tbxposn > 0) width = `width: calc(100% - ${parseInt(tgroup.att.tbxposn)}pt);`;
+	if (parseFloat(block.att.bsx) - parseFloat(tgroup.att.tbwidth) < 10) {
+		width = `width: 100%;`;
+	}
+
+	if (tgroup.att.tbxposn > 0) margin += `margin-left: ${tgroup.att.tbxposn}pt; `;
 
 	table = `<table class="${tgroup.att.tgroupstyle}" style="${width} ${margin}${border} border-collapse: collapse;">${options.fn(this)}</table>`;
 

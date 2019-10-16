@@ -60,9 +60,9 @@ module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) =>
 					if (!page.att.plname.includes("cov")) {
 						style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 					}
+				} else {
+					style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 				}
-			} else {
-				style += `margin-top: ${parseFloat(att.prelead)}pt;`;
 			}
 		} else {
 			if (parseFloat(att.prelead) === 0) {
@@ -104,6 +104,8 @@ module.exports.inlineCSS = (rootStyle, page, block, group, gindex, lineIndex) =>
 		} else if (rootatt.font.includes("Helvetica")) {
 			fontFamily = "Helvetica";
 		} else {
+			console.log(rootatt.font);
+
 			fontFamily = "Arial";
 		}
 
@@ -203,12 +205,16 @@ module.exports.wrapBlockText = (text, style, rootStyle, group, line, groupCSS, t
 	if (tIndex > 1 && t.att.cgt) if (group.el[lineIndex].el[tIndex - 1].name === "xref") text = `<a href="#${group.el[lineIndex].el[tIndex - 1].att.id}">${text}</a>`;
 
 	//If broken with a <qa> and alignment is different; has to be last T in an line element
-	if (group.el[0].att.qdtype !== line.att.qdtype && line.att.quadset && text.length > 1 && line.att.qdtype !== "forcej") {
+	if (group.el[0].att.qdtype !== line.att.qdtype && group.el[0].att.qdtype !== "justify" && line.att.quadset && text.length > 1 && line.att.qdtype !== "forcej") {
 		if (line.el.length > 1) {
 			if (tIndex === 0) text = `<div style="text-align: ${line.att.qdtype}; padding-top: ${line.att.prelead}pt;">${text}`;
 			if (line.el.length - 1 === tIndex) text += `</div>`;
 		} else {
-			text = `<div style="text-align: ${line.att.qdtype}; padding-top: ${line.att.prelead}pt;">${text}</div>`;
+			if (parseInt(line.att.prelead) < 0) {
+				text = `<div style="text-align: ${line.att.qdtype}; margin-top: ${line.att.prelead}pt; padding-left: ${line.att.lindent}pt;">${text}</div>`;
+			} else {
+				text = `<div style="text-align: ${line.att.qdtype}; padding-top: ${line.att.prelead}pt; padding-left: ${line.att.lindent}pt;">${text}</div>`;
+			}
 		}
 	}
 

@@ -104,7 +104,7 @@ const listText = (rootStyle, block, group, groupStyle) => {
 			});
 	});
 
-	return `<td class="group-prehang" style="${inlineCSS} width: ${hangAmount}pt; padding-top: ${group.el[0].att.prelead}pt; ${level}">${hangCharacters.trim()}</td><td class="group-hang" style="${inlineCSS} text-align:${group.el[1].att.qdtype}; padding-top: ${group.el[0].att.prelead}pt; max-width: ${group.el[1].att.lnwidth}pt;">${text}</td>`;
+	return `<td class="group-prehang" style="${inlineCSS} width: ${hangAmount}pt; ${level}">${hangCharacters.trim()}</td><td class="group-hang" style="${inlineCSS} text-align:${group.el[1].att.qdtype};  max-width: ${group.el[1].att.lnwidth}pt;">${text}</td>`;
 };
 
 const tableText = (rootStyle, block, frame, groupStyle) => {
@@ -194,10 +194,13 @@ const handleBlockRules = (rootStyle, block, group, line, t, tIndex) => {
 	let display = `inline-block`;
 	let width = ``;
 
-	if (parseInt(line.att.prelead) < 0) line.att.prelead = 0;
+	// if (parseInt(line.att.prelead) < 0) line.att.prelead = 0;
 
 	if (line.att.qdtype === "left") margin_top = `margin-top: ${parseInt(line.att.prelead)}pt;`;
-	if (line.att.qdtype === "center") margin_top = `margin: auto; margin-top: ${parseInt(line.att.prelead)}pt; margin-bottom: 3pt;`;
+
+	if (parseInt(line.att.prelead) < 0) line.att.prelead = Math.abs(parseInt(line.att.prelead));
+
+	if (line.att.qdtype === "center") margin_top = `margin: auto; margin-top: ${parseInt(line.att.prelead) + 6}pt; margin-bottom: 3pt;`;
 
 	if (t.att.d === "0.5") t.att.d = "1";
 

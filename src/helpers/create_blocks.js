@@ -14,6 +14,8 @@ exports = Handlebars.registerHelper("create_blocks", (page, block, blockIndex, o
 			let amt = parseFloat(block.att.bx) + parseFloat(block.att.bsx) - parseFloat(page[blockIndex + 1].att.bx);
 			if (amt > 20) amt = 12;
 			margin += `margin-right: ${Math.abs(amt)}pt;`;
+
+			width = `width: ${parseFloat(block.att.bsx) + 8}pt`;
 		}
 
 		display = `display: inline-block;`;

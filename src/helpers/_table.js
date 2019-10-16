@@ -3,6 +3,7 @@ const help = require("./index");
 
 module.exports.cellContainer = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspecs) => {
 	const colspec = colspecs[col.att.col - 1];
+	const isLast = isLastColumn(tgroup, col);
 	let columnSpan = "";
 	let colspecWithSpan = "";
 
@@ -14,7 +15,7 @@ module.exports.cellContainer = (rootStyle, block, tgroup, row, rowIndex, col, co
 	let rowspan = "";
 	if (col.att.morerows !== undefined) rowspan = `rowspan="${parseInt(col.att.morerows) + 1}"`;
 
-	return `<td ${columnSpan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecWithSpan)}" >${cellStyle(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec)}</td>`;
+	return `<td ${columnSpan} ${rowspan} align="${col.att.align}" valign="${col.att.valign}" style="${rowStyle(rootStyle, tgroup, row, rowIndex, col, colspec, colspecWithSpan)}" >${cellStyle(rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec, colspecWithSpan)}</td>`;
 };
 
 const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) => {
@@ -36,21 +37,29 @@ const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) =
 
 	if (colspec.att.tbclgut > 0) {
 		//Cell Header rows
-		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows)) {
-			if (isLast) {
+		if (tgroup.att.hdstyle_rows !== "0" && parseInt(row.att.rowrel) <= parseInt(tgroup.att.hdr_rows) && col.att.namest === undefined) {
+			if (col.att.align !== "right" && isLast) {
+				if (parseInt(colspec.att.tbcrwsp) > 0) {
+					rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
+					rowStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
+				}
 				rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt;`);
-				rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
+				// rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
 			}
 
 			if (col.att.namest !== undefined) {
 				if (parseInt(tgroup.att.cols) !== parseInt(col.att.nameend.slice(3)) - parseInt(col.att.namest.slice(3)) + parseInt(col.att.col)) {
 					rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
+					rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; padding-left: ${colspec.att.tbclwsp}pt;`);
 				}
 			} else {
-				if (tgroup.att.cols !== col.att.col) rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; padding-right: ${colspec.att.tbcrwsp}pt;`);
+				if (tgroup.att.cols !== col.att.col) {
+					rowStyle.push(`margin-left: ${colspec.att.tbclwsp}pt; `);
+					rowStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt; `);
+				}
 			}
 		} else {
-			if (col.att.align === "center" && isLast) rowStyle.push(`padding-left: ${colspec.att.tbclwsp}pt;`);
+			if (col.att.align === "center" && isLast) rowStyle.push(`padding-left: ${parseFloat(colspec.att.tbclwsp)}pt;`);
 		}
 	}
 
@@ -61,26 +70,44 @@ const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) =
 	if (col.el[0].el.length > 1) rowStyle.push(`line-height: ${parseFloat(rootAtt.size) + parseFloat(firstLine.att.ldextra)}pt;`);
 
 	//Cell width
-	if (isLast || col.att.nameend) {
-		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt;`);
+	if (isLast) {
+		rowStyle.push(`width: ${parseFloat(colspec.att.colwidth)}pt;`);
 	} else {
-		rowStyle.push(`width: ${parseFloat(colspec.att.tbcmeas)}pt; max-width: ${colspec.att.colwidth}pt;`);
+		rowStyle.push(`width: ${parseFloat(colspec.att.colwidth) - parseFloat(colspec.att.tbclwsp) * 2}pt; max-width: ${colspec.att.colwidth}pt;`);
+	}
+
+	if (col.att.col === "1") {
+		rowStyle.push(`padding-left: ${parseFloat(colspec.att.tbclwsp)}pt;`);
+	}
+
+	if (isLast && parseInt(colspec.att.tbcrwsp) > 0 && col.att.namest === undefined) {
+		if (col.att.namest == undefined) {
+		} else {
+			rowStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
+		}
+		rowStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
 	}
 
 	//Row gutter
 	if (parseInt(row.att.rowrel) > parseInt(tgroup.att.hdr_rows)) {
 		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.hdr_rows)) {
-			if (parseInt(row.att.row_gutter) <= 6) {
-				rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
-			}
+			rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
 		}
 		if (parseInt(row.att.rowrel) === parseInt(tgroup.att.mx_rows)) {
-			if (parseInt(row.att.row_gutter) <= 6) {
-				rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
-			}
+			rowStyle.push(`padding-bottom: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
 		}
 	} else {
-		if (parseInt(row.att.row_gutter) > 6) rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
+		rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
+	}
+
+	if (tgroup.el[tgroup.el.length - 1].el.length + parseInt(tgroup.att.hdr_rows) === parseInt(row.att.rowrel)) {
+		rowStyle.push(`padding-top: ${parseInt(tgroup.el[tgroup.el.length - 1].el[0].att.row_gutter) / 2}pt;`);
+	} else {
+		if (rowIndex > 0) {
+			if (tgroup.el[tgroup.el.length - 1].el[rowIndex - 1] !== undefined) rowStyle.push(`padding-top: ${parseInt(tgroup.el[tgroup.el.length - 1].el[rowIndex - 1].att.row_gutter) / 2}pt; `);
+		} else {
+			rowStyle.push(`padding-top: ${parseInt(row.att.row_gutter) / 2}pt;`);
+		}
 	}
 
 	let shading = getShadingColor(col);
@@ -93,6 +120,7 @@ const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) =
 		if (row.att.rcolor === undefined) row.att.rcolor = "black";
 		if (col.att.rule_info === "1 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${row.att.rcolor};`);
 		if (col.att.rule_info === "2 1 0") rowStyle.push(`border-bottom: ${row.att.rthk}pt solid ${row.att.rcolor};`);
+		if (col.att.rule_info === "3 1 0") rowStyle.push(`border-bottom: 3pt double ${row.att.rcolor};`);
 	}
 
 	//Vrule
@@ -109,7 +137,7 @@ const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) =
 	return rowStyle.join(" ");
 };
 
-const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec) => {
+const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colspec, colspecWithSpan) => {
 	const isNumber = col.att.alfleft !== undefined;
 	const isLast = isLastColumn(tgroup, col);
 	let text = "";
@@ -128,10 +156,31 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 
 			if (row.att.rthk === undefined) row.att.rthk = 1;
 			if (row.att["rcolor-cmyk"] === undefined && shading !== undefined) {
-				row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
+				let colors = shading.split(" ");
+
+				row.att["rcolor-cmyk"] = `1 1 1 1`;
+
+				if (colors[0] === "0" && colors[1] === "0" && colors[2] === "0") {
+					if (parseInt(colors[3]) < 0.5) {
+						row.att["rcolor-cmyk"] = `1 1 1 1`;
+					} else {
+						row.att["rcolor-cmyk"] = `0.0 0.0 0.0 0.0`;
+					}
+				}
 			} else if (row.att["rcolor-cmyk"] === undefined && shading === undefined) {
 				row.att["rcolor-cmyk"] = `1 1 1 1`;
 			}
+
+			// if (line.att.last) {
+			// 	if (parseInt(line.att.prelead) > 0) divStyle.push(`padding-top: ${line.att.prelead}pt;`);
+			// 	if (row.att.row === "1" && line.att.last) divStyle.push(`padding-top: ${parseFloat(row.att["row_gutter"]) / 2}pt;`);
+			// 	if (row.att.rowrel === "1") divStyle.push(`padding-top: ${parseFloat(row.att["row_pos"])}pt;`);
+
+			// 	if (tgroup.el[tgroup.el.length - 1].el.length + parseInt(tgroup.att.hdr_rows) === parseInt(row.att.rowrel) && line.att.last) {
+			// 		const botDifference = parseFloat(row.att["row_pos"] - (parseFloat(line.att.yfinal) - parseFloat(row.att.tbrdepth)));
+			// 		if (botDifference > 0) divStyle.push(`padding-bottom: ${botDifference / 2}pt;`);
+			// 	}
+			// }
 
 			if (line.att.last || line.att.nobkpt) {
 				if (row.att.rthk === "0.5") row.att.rthk = 1;
@@ -179,11 +228,25 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 					if (!hasRight && line.att.last) divStyle.push(`margin-right: ${colspec.att.tbcrwsp}pt;`);
 				}
 
-			if (!isNotHeaderCell)
-				if (!isLast && line.att.last) {
-					divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut) / 2}pt;`);
-					if (col.att.col === "1") divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
+			if (!isNotHeaderCell) {
+				if (col.att.namest === undefined) {
+					if (line.att.last) {
+						if (col.att.col === "1") {
+							divStyle.push(`padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
+						} else {
+							divStyle.push(`margin-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
+						}
+						divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
+					}
+
+					if (line.att.qdtype === "right" && isLast) {
+						divStyle.push(`margin-left: ${parseInt(colspec.att.tbclgut)}pt;`);
+					}
+				} else {
+					divStyle.push(`padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
+					if (!isLast) divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
 				}
+			}
 
 			//Handles table indents
 			if (group.el.length > 1) {
@@ -199,24 +262,47 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 				}
 			}
 
+			if (parseInt(line.att.lnwidth) === 0 && parseInt(line.att.lnmeas) < 500 && parseFloat(colspec.att.tbmxalnw) !== 0) divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw)}pt;`);
+
 			line.el.forEach((t, tIndex) => {
 				if (t.type === "instruction") {
 					const ins = style.handleInstructions(t);
 					if (ins !== null) text += ins;
 				} else {
 					//Add widths to certian columns
+					const offSet = getTotalX(line, tIndex);
+					if (!style.hasStyleProperty(divStyle, "max-width") && line.att.last && !isNumber && parseFloat(line.att.lnwidth) !== 0) {
+						if (parseInt(t.att.x) && !isLast) {
+							if (col.att.rule_info === "1 2 0") divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(colspec.att.tbcrwsp) + parseFloat(offSet)}pt;`);
+						} else {
+							if (col.att.rule_info === "1 2 0") divStyle.push(`max-width: ${parseFloat(line.att.lnwidth)}pt;`);
+						}
+
+						if (parseInt(t.att.x) && !isLast) {
+							if (col.att.rule_info === "2 2 0") divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(colspec.att.tbcrwsp) + parseFloat(offSet)}pt;`);
+						} else if (parseInt(t.att.x)) {
+							if (col.att.rule_info === "2 2 0") divStyle.push(`max-width: ${parseFloat(line.att.lnwidth)}pt;`);
+						}
+
+						if (parseInt(t.att.x) && !isLast) {
+							if (col.att.rule_info === "3 2 0") divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(colspec.att.tbcrwsp) + parseFloat(offSet)}pt;`);
+						} else if (parseInt(t.att.x)) {
+							if (col.att.rule_info === "3 2 0") divStyle.push(`max-width: ${parseFloat(line.att.lnwidth)}pt;`);
+						}
+					}
+
 					if (isNotHeaderCell && line.att.last && isNumber && !style.hasStyleProperty(divStyle, "max-width")) {
-						if (parseFloat(t.att.x) > 0 && t.hasOwnProperty("el")) {
+						if (parseFloat(t.att.x) > 0 && t.hasOwnProperty("el") && parseFloat(colspec.att.tbmxalnw) !== 0) {
 							if (isLast && col.att.rule_info === undefined) {
 								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) + parseFloat(t.att.x)}pt;`);
 							} else {
-								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x)}pt;`);
+								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) - parseFloat(t.att.x) + parseFloat(colspec.att.tbcrwsp)}pt;`);
 							}
-						} else if (t.hasOwnProperty("el")) {
+						} else if (t.hasOwnProperty("el") && parseFloat(colspec.att.tbmxalnw) !== 0) {
 							if (isLast && parseInt(line.att.lnwidth) > colspec.att.tbmxalnw && col.att.rule_info === undefined) {
-								divStyle.push(`max-width: ${parseFloat(line.att.lnwidth)}pt;`);
+								divStyle.push(`max-width: ${parseFloat(line.att.lnwidth) + parseFloat(colspec.att.tbcrwsp)}pt;`);
 							} else {
-								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw)}pt;`);
+								divStyle.push(`max-width: ${parseFloat(colspec.att.tbmxalnw) + parseFloat(colspec.att.tbcrwsp)}pt;`);
 							}
 						}
 					}
