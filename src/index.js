@@ -46,7 +46,7 @@ const Renderer = () => {
 			let folder = remote.getGlobal("saveLocation");
 
 			if (!fs.existsSync(folder)) {
-				// if (folder.includes("N:\\HTML\\Out") || folder.includes("C:\\Users\\padillab\\Documents\\Development")) deleteFolderRecursive(folder);
+				if (folder.includes("C:\\Users\\padillab\\Documents\\Development")) console.log(folder);
 				fs.mkdirSync(folder);
 			}
 
