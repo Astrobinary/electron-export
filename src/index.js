@@ -4,6 +4,8 @@ import { ipcRenderer as ipc, remote, shell } from "electron";
 import Handlebars from "handlebars";
 import fs from "fs";
 import sanitizeHtml from "sanitize-html";
+import { HtmlValidate } from "html-validate";
+
 import pretty from "pretty";
 import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
@@ -66,14 +68,21 @@ const Renderer = () => {
 
 			stream.once("open", () => {
 				let html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
-				let clean = sanitizeHtml(html, {
-					recognizeSelfClosing: true,
-					allowedTags: false,
-					allowedAttributes: false
+				// let clean = sanitizeHtml(html, {
+				// 	recognizeSelfClosing: true,
+				// 	allowedTags: false,
+				// 	allowedAttributes: false
+				// });
+
+				const htmlvalidate = new HtmlValidate({
+					extends: ["htmlvalidate:recommended"]
 				});
 
+				const report = htmlvalidate.validateString("<div>lorem ipsum</span>");
+				console.log(report.results);
+
 				stream.end(
-					pretty(clean, {
+					pretty(html, {
 						ocd: true
 					})
 				);

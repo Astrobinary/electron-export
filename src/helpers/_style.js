@@ -259,7 +259,7 @@ module.exports.handleInstructions = el => {
 	if (el.ins.includes("link;")) return `<a href="${el.ins.slice(5)}">`;
 	if (el.ins === "/link") return `</a>`;
 
-	if (el.ins === "sup") return `<sup style="line-height: 0;">`;
+	if (el.ins === "sup") return `<sup>`;
 	if (el.ins === "reset") return `</sup>`;
 
 	if (el.ins.includes("ru;")) {

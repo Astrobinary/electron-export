@@ -67,7 +67,7 @@ const createWindow = () => {
 
 // CLS_Genfin/GRP_house/JOB_nt10002728x1_424b5-FILED
 const setJobLocation = () => {
-	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_gs/JOB_nt10001138x10_s1a-FILED" : process.argv[1];
+	let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_Genfin/GRP_gs/JOB_nt10002760x1_sf1-FILED" : process.argv[1];
 	// let arg1 = isDev ? "//sfphq-xppsrv01/XPP/SFP/alljobz/CLS_training/GRP_brandon/JOB_HTML_TABLE" : process.argv[1];
 
 	let path = arg1.split("/");

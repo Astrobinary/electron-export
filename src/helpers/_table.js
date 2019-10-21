@@ -81,9 +81,10 @@ const rowStyle = (rootStyle, tgroup, row, rowIndex, col, colspec, colspecSpan) =
 	}
 
 	if (isLast && parseInt(colspec.att.tbcrwsp) > 0 && col.att.namest === undefined) {
-		if (col.att.namest == undefined) {
+		if (col.att.namest === undefined) {
 		} else {
 			rowStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
+			console.log("here");
 		}
 		rowStyle.push(`padding-right: ${colspec.att.tbcrwsp}pt;`);
 	}
@@ -231,9 +232,7 @@ const cellStyle = (rootStyle, block, tgroup, row, rowIndex, col, colIndex, colsp
 			if (!isNotHeaderCell) {
 				if (col.att.namest === undefined) {
 					if (line.att.last) {
-						if (col.att.col === "1") {
-							divStyle.push(`padding-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
-						} else {
+						if (col.att.col !== "1") {
 							divStyle.push(`margin-left: ${parseInt(colspec.att.tbclwsp)}pt;`);
 						}
 						divStyle.push(`margin-right: ${parseInt(colspec.att.tbcrwsp)}pt;`);
