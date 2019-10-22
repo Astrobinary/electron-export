@@ -194,7 +194,9 @@ const handleBlockRules = (rootStyle, block, group, line, t, tIndex) => {
 	let display = `inline-block`;
 	let width = ``;
 
-	// if (parseInt(line.att.prelead) < 0) line.att.prelead = 0;
+	if (parseInt(line.att.prelead) < 0) {
+		line.att.prelead = parseInt(line.att.prelead) + 12;
+	}
 
 	if (line.att.qdtype === "left") margin_top = `margin-top: ${parseInt(line.att.prelead)}pt;`;
 

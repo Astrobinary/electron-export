@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { ipcRenderer as ipc, remote, shell } from "electron";
 import Handlebars from "handlebars";
 import fs from "fs";
 import sanitizeHtml from "sanitize-html";
+import { HtmlValidate } from "html-validate";
+
 import pretty from "pretty";
 import isDev from "electron-is-dev";
 import Titlebar from "./components/Titlebar/titlebar";
@@ -18,7 +20,13 @@ import "./helpers";
 import "./global.scss";
 
 const Renderer = () => {
+	const [isLoading, setIsLoading] = useState(false);
 	let path = useRef();
+
+	const startProcess = () => {
+		setIsLoading(true);
+		ipc.send("getXML", path.current);
+	};
 
 	useEffect(() => {
 		let uniqueFolder = remote.getGlobal("jobNumber");
@@ -31,15 +39,16 @@ const Renderer = () => {
 
 		ipc.on("saveLocation", (e, newPath) => {
 			path.current = newPath;
-
 			e.sender.send("debugRelay", `\nNew save path selected: ${path.current}\n`);
 		});
+	});
 
-		ipc.on("complie", e => {
+	useEffect(() => {
+		ipc.once("complie", e => {
 			let folder = remote.getGlobal("saveLocation");
 
 			if (!fs.existsSync(folder)) {
-				// if (folder.includes("N:\\HTML\\Out") || folder.includes("C:\\Users\\padillab\\Documents\\Development")) deleteFolderRecursive(folder);
+				if (folder.includes("C:\\Users\\padillab\\Documents\\Development")) console.log(folder);
 				fs.mkdirSync(folder);
 			}
 
@@ -59,30 +68,55 @@ const Renderer = () => {
 
 			stream.once("open", () => {
 				let html = `<!DOCTYPE html> <meta http-equiv="content-type" content="text/html; charset=UTF-8"><html><head></head><body>${output}</body></html>`;
-				let clean = sanitizeHtml(html, {
-					recognizeSelfClosing: true,
-					allowedTags: false,
-					allowedAttributes: false
+				// let clean = sanitizeHtml(html, {
+				// 	recognizeSelfClosing: true,
+				// 	allowedTags: false,
+				// 	allowedAttributes: false
+				// });
+
+				const htmlvalidate = new HtmlValidate({
+					extends: ["htmlvalidate:recommended"]
 				});
 
+				const report = htmlvalidate.validateString("<div>lorem ipsum</span>");
+				console.log(report.results);
+
 				stream.end(
-					pretty(clean, {
+					pretty(html, {
 						ocd: true
 					})
 				);
 			});
 
-			e.sender.send("debugRelay", `HTML created at: ${path.current}`);
 			shell.showItemInFolder(path.current);
+			e.sender.send("debugRelay", `HTML created at: ${path.current}`);
+			setIsLoading(false);
+			return;
 		});
-	});
+
+		return () => {
+			ipc.removeAllListeners("complie");
+		};
+	}, [isLoading]);
 
 	return (
 		<React.Fragment>
 			<Titlebar />
 			<JobInfoBar />
 			<DebugWindow />
-			<Buttonbar newpath={path} />
+			{isLoading ? (
+				<div className="loading-contain">
+					<div className="longfazers">
+						<span />
+						<span />
+						<span />
+						<span />
+					</div>
+					<h1>Creating HTML</h1>
+				</div>
+			) : (
+				<Buttonbar newpath={path} startProcess={startProcess} />
+			)}
 			<Statusbar />
 		</React.Fragment>
 	);
